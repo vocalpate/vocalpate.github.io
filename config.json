@@ -165,6 +165,19 @@
       "tags": [
         { "text": "GitHub", "color": "gray" }
       ]
+    },
+    {
+      "name": "線上簽名系統",
+      "desc": "居家醫療訪視線上簽名，醫師傳連結、家屬手機簽名、自動記錄。",
+      "url": "https://script.google.com/macros/s/AKfycbzr91bNmgV_HIBbpHiuKSXGwF4ZNnCZy0ZdAosl82NY1EpJ5EtZhHHus6U_VZsU5egOvg/exec",
+      "icon": "✍️",
+      "iconBg": "#EFF4FF",
+      "category": "居家醫療",
+      "status": "dev",
+      "tags": [
+        { "text": "Apps Script", "color": "purple" },
+        { "text": "Canvas 簽名", "color": "blue" }
+      ]
     }
   ]
 }
