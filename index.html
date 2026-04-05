@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>工具中心 | Portal</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -206,6 +208,11 @@ document.getElementById('overlay').addEventListener('click',closeMobileMenu);
 document.getElementById('searchInput').addEventListener('input',e=>{searchQuery=e.target.value.trim();renderMain()});
 document.addEventListener('keydown',e=>{const si=document.getElementById('searchInput');if(e.key==='/'&&document.activeElement!==si){e.preventDefault();si.focus()}if(e.key==='Escape'){si.blur();searchQuery='';si.value='';renderMain()}});
 loadConfig();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js');
+}
 </script>
 </body>
 </html>
