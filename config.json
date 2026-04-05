@@ -1,0 +1,170 @@
+{
+  "site": {
+    "title": "工具中心",
+    "subtitle": "Portal"
+  },
+  "categories": {
+    "居家醫療": "🏠",
+    "診所開業": "🏥",
+    "AI 工具": "🤖",
+    "基礎建設": "🔧"
+  },
+  "projects": [
+    {
+      "name": "患者個案管理",
+      "desc": "居家醫療患者資料管理，支援新增、編輯、搜尋患者個案。",
+      "url": "https://vocalpate.github.io/home-visit-app/",
+      "icon": "🏥",
+      "iconBg": "#E1F5EE",
+      "category": "居家醫療",
+      "status": "live",
+      "tags": [
+        { "text": "GitHub Pages", "color": "blue" },
+        { "text": "Google Sheets", "color": "green" }
+      ]
+    },
+    {
+      "name": "路線規劃",
+      "desc": "居家醫療訪視路線自動規劃，Google Maps 整合與貪婪演算法最佳化。",
+      "url": "https://vocalpate.github.io/home-visit-app/",
+      "icon": "🗺️",
+      "iconBg": "#EFF4FF",
+      "category": "居家醫療",
+      "status": "live",
+      "tags": [
+        { "text": "Google Maps", "color": "blue" },
+        { "text": "路線最佳化", "color": "purple" }
+      ]
+    },
+    {
+      "name": "Apps Script 後端",
+      "desc": "居家醫療資料同步後端，連接個別與主 Google Sheets。",
+      "url": "https://script.google.com/",
+      "icon": "⚙️",
+      "iconBg": "#F5F3FF",
+      "category": "居家醫療",
+      "status": "live",
+      "tags": [
+        { "text": "Apps Script", "color": "purple" },
+        { "text": "資料同步", "color": "green" }
+      ]
+    },
+    {
+      "name": "小針刀服務",
+      "desc": "小針刀（acupotomy）服務線相關工具與資料。",
+      "url": "#",
+      "icon": "🪡",
+      "iconBg": "#FFF7ED",
+      "category": "診所開業",
+      "status": "plan",
+      "tags": [
+        { "text": "服務線", "color": "coral" },
+        { "text": "規劃中", "color": "gray" }
+      ]
+    },
+    {
+      "name": "美顏針服務",
+      "desc": "美顏針（cosmetic acupuncture）服務線，含衛教資料與流程。",
+      "url": "#",
+      "icon": "✨",
+      "iconBg": "#F5F3FF",
+      "category": "診所開業",
+      "status": "plan",
+      "tags": [
+        { "text": "服務線", "color": "coral" },
+        { "text": "規劃中", "color": "gray" }
+      ]
+    },
+    {
+      "name": "體重管理服務",
+      "desc": "體重管理（weight management）服務線，AI 飲食追蹤與合規管理。",
+      "url": "#",
+      "icon": "⚖️",
+      "iconBg": "#ECFDF5",
+      "category": "診所開業",
+      "status": "plan",
+      "tags": [
+        { "text": "服務線", "color": "coral" },
+        { "text": "AI 自動化", "color": "purple" }
+      ]
+    },
+    {
+      "name": "衛教單張",
+      "desc": "三大服務線的患者衛教資料，Canva 設計。",
+      "url": "#",
+      "icon": "📋",
+      "iconBg": "#FFFBEB",
+      "category": "診所開業",
+      "status": "dev",
+      "tags": [
+        { "text": "Canva", "color": "amber" },
+        { "text": "衛教", "color": "green" }
+      ]
+    },
+    {
+      "name": "AI 新聞聚合 Bot",
+      "desc": "Gemini API + Google Custom Search，每日推送投資追蹤 Top 10 摘要至 LINE。",
+      "url": "#",
+      "icon": "🤖",
+      "iconBg": "#EFF4FF",
+      "category": "AI 工具",
+      "status": "live",
+      "tags": [
+        { "text": "Gemini", "color": "blue" },
+        { "text": "LINE Bot", "color": "green" },
+        { "text": "Python", "color": "amber" }
+      ]
+    },
+    {
+      "name": "LINE Bot 系統",
+      "desc": "診所患者溝通管道，Claude API 文字推理 + Gemini 影像分析。",
+      "url": "#",
+      "icon": "💬",
+      "iconBg": "#ECFDF5",
+      "category": "AI 工具",
+      "status": "dev",
+      "tags": [
+        { "text": "Claude API", "color": "purple" },
+        { "text": "LINE", "color": "green" }
+      ]
+    },
+    {
+      "name": "Google Drive 整理",
+      "desc": "10 大分類資料夾結構，Apps Script 自動搬遷。",
+      "url": "https://drive.google.com/",
+      "icon": "📁",
+      "iconBg": "#FFFBEB",
+      "category": "基礎建設",
+      "status": "dev",
+      "tags": [
+        { "text": "Google Drive", "color": "amber" },
+        { "text": "Apps Script", "color": "purple" }
+      ]
+    },
+    {
+      "name": "VPS 主機",
+      "desc": "Hetzner CX22 方案評估，用於部署 LINE Bot 與 AI 後端。",
+      "url": "#",
+      "icon": "🖥️",
+      "iconBg": "#F3F4F6",
+      "category": "基礎建設",
+      "status": "plan",
+      "tags": [
+        { "text": "Hetzner", "color": "gray" },
+        { "text": "部署", "color": "blue" }
+      ]
+    },
+    {
+      "name": "GitHub 專案庫",
+      "desc": "所有程式碼與靜態網站的集中管理。",
+      "url": "https://github.com/vocalpate",
+      "icon": "🐙",
+      "iconBg": "#F3F4F6",
+      "category": "基礎建設",
+      "status": "live",
+      "tags": [
+        { "text": "GitHub", "color": "gray" }
+      ]
+    }
+  ]
+}

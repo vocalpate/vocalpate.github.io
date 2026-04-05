@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工具中心 | Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f6f7f9;--bg-card:#fff;--bg-sidebar:#fff;--bg-hover:#f0f2f5;
+  --text:#1a1d23;--text-s:#5f6368;--text-h:#9aa0a8;
+  --border:#e3e5e8;--border-l:#eef0f2;
+  --accent:#2563eb;--accent-bg:#eff4ff;--accent-t:#1d4ed8;
+  --green:#059669;--green-bg:#ecfdf5;--green-t:#047857;
+  --amber:#d97706;--amber-bg:#fffbeb;--amber-t:#b45309;
+  --gray-tag:#6b7280;--gray-tag-bg:#f3f4f6;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-t:#6d28d9;
+  --coral:#ea580c;--coral-bg:#fff7ed;--coral-t:#c2410c;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 12px rgba(0,0,0,.08);
+  --radius:10px;--radius-sm:6px;
+  --font:'Noto Sans TC',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#111318;--bg-card:#1a1d24;--bg-sidebar:#15171d;--bg-hover:#22252e;
+    --text:#e4e6ea;--text-s:#9ca3af;--text-h:#6b7280;
+    --border:#2a2d35;--border-l:#22252e;
+    --accent:#60a5fa;--accent-bg:#1e2a3d;--accent-t:#93bbfd;
+    --green:#34d399;--green-bg:#0f2922;--green-t:#6ee7b7;
+    --amber:#fbbf24;--amber-bg:#2a2210;--amber-t:#fcd34d;
+    --gray-tag:#9ca3af;--gray-tag-bg:#22252e;
+    --purple:#a78bfa;--purple-bg:#1f1a30;--purple-t:#c4b5fd;
+    --coral:#fb923c;--coral-bg:#2a1f14;--coral-t:#fdba74;
+    --shadow:0 1px 3px rgba(0,0,0,.3);
+    --shadow-lg:0 4px 12px rgba(0,0,0,.4);
+  }
+}
+html{font-size:15px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:var(--bg-sidebar);border-bottom:1px solid var(--border);
+  padding:0 1.5rem;height:56px;display:flex;align-items:center;gap:1rem;
+  backdrop-filter:blur(12px);
+}
+.topbar-brand{font-weight:600;font-size:1.1rem;letter-spacing:-.02em;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.topbar-brand svg{width:22px;height:22px;color:var(--accent)}
+.search-box{flex:1;max-width:420px;position:relative}
+.search-box input{
+  width:100%;height:36px;padding:0 12px 0 36px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg);color:var(--text);font-size:.875rem;font-family:var(--font);
+  outline:none;transition:border .2s,box-shadow .2s;
+}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.search-box input::placeholder{color:var(--text-h)}
+.search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-h);pointer-events:none}
+.search-shortcut{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  font-size:11px;font-family:var(--mono);color:var(--text-h);
+  background:var(--bg-hover);padding:2px 6px;border-radius:4px;border:1px solid var(--border-l);
+  pointer-events:none;
+}
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:var(--bg-sidebar);border-right:1px solid var(--border);
+  padding:1rem 0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;
+}
+.sidebar-section{padding:0 .75rem;margin-bottom:.25rem}
+.sidebar-label{font-size:.7rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text-h);padding:0 .5rem;margin-bottom:.35rem}
+.sidebar-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 12px;border-radius:var(--radius-sm);
+  font-size:.85rem;color:var(--text-s);cursor:pointer;
+  transition:all .15s;user-select:none;
+}
+.sidebar-item:hover{background:var(--bg-hover);color:var(--text)}
+.sidebar-item.active{background:var(--accent-bg);color:var(--accent-t);font-weight:500}
+.sidebar-item .count{margin-left:auto;font-size:.7rem;font-family:var(--mono);color:var(--text-h);min-width:18px;text-align:center}
+.sidebar-item.active .count{color:var(--accent-t)}
+.sidebar-icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.main{flex:1;overflow-y:auto;padding:1.5rem 2rem}
+.main-header{display:flex;align-items:baseline;gap:12px;margin-bottom:1.25rem}
+.main-title{font-size:1.15rem;font-weight:600;letter-spacing:-.01em}
+.main-count{font-size:.8rem;color:var(--text-h);font-family:var(--mono)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.card{
+  background:var(--bg-card);border:1px solid var(--border-l);border-radius:var(--radius);
+  padding:1rem 1.15rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.card:hover{border-color:var(--border);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:.6rem}
+.card-emoji{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.card-info{flex:1;min-width:0}
+.card-name{font-weight:500;font-size:.9rem;margin-bottom:2px;line-height:1.3}
+.card-desc{font-size:.78rem;color:var(--text-s);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:.6rem}
+.card-tag{font-size:.65rem;font-weight:500;padding:2px 7px;border-radius:4px;letter-spacing:.02em}
+.card-status{position:absolute;top:12px;right:12px;width:7px;height:7px;border-radius:50%}
+.card-link{text-decoration:none;color:inherit;display:block}
+.status-live{background:var(--green)}.status-dev{background:var(--amber)}.status-plan{background:var(--gray-tag)}
+.tag-green{background:var(--green-bg);color:var(--green-t)}
+.tag-blue{background:var(--accent-bg);color:var(--accent-t)}
+.tag-purple{background:var(--purple-bg);color:var(--purple-t)}
+.tag-amber{background:var(--amber-bg);color:var(--amber-t)}
+.tag-coral{background:var(--coral-bg);color:var(--coral-t)}
+.tag-gray{background:var(--gray-tag-bg);color:var(--gray-tag)}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text-h)}
+.empty-icon{font-size:2rem;margin-bottom:.5rem;opacity:.5}
+.empty-text{font-size:.9rem}
+.loading{text-align:center;padding:4rem 1rem;color:var(--text-h);font-size:.9rem}
+.menu-toggle{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:4px}
+.sidebar-overlay{display:none}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-260px;top:56px;bottom:0;z-index:90;width:250px;transition:left .25s;box-shadow:var(--shadow-lg)}
+  .sidebar.open{left:0}
+  .sidebar-overlay.open{display:block;position:fixed;inset:0;top:56px;z-index:80;background:rgba(0,0,0,.3)}
+  .menu-toggle{display:block}
+  .main{padding:1rem}
+  .card-grid{grid-template-columns:1fr}
+  .search-shortcut{display:none}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="menu-toggle" id="menuBtn" aria-label="選單">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="topbar-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span id="siteTitle">工具中心</span>
+  </div>
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" id="searchInput" placeholder="搜尋專案名稱、描述、標籤...">
+    <span class="search-shortcut">/</span>
+  </div>
+</div>
+<div class="sidebar-overlay" id="overlay"></div>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main" id="main"><div class="loading">載入中...</div></main>
+</div>
+<script>
+let CONFIG={site:{},categories:{},projects:[]};
+let activeCategory='全部';
+let searchQuery='';
+const STATUS_LABEL={live:'已上線',dev:'開發中',plan:'規劃中'};
+
+async function loadConfig(){
+  try{
+    const res=await fetch('./config.json');
+    CONFIG=await res.json();
+    if(CONFIG.site.title){
+      document.getElementById('siteTitle').textContent=CONFIG.site.title;
+      document.title=CONFIG.site.title+(CONFIG.site.subtitle?' | '+CONFIG.site.subtitle:'');
+    }
+    renderAll();
+  }catch(e){
+    document.getElementById('main').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">無法載入 config.json，請確認檔案存在</div></div>';
+  }
+}
+function getCategories(){
+  const c1=Object.keys(CONFIG.categories||{});
+  const c2=[...new Set(CONFIG.projects.map(p=>p.category))];
+  return['全部',...new Set([...c1,...c2])];
+}
+function getCatIcon(c){return c==='全部'?'📌':(CONFIG.categories&&CONFIG.categories[c])||'📂'}
+function getFiltered(){
+  return CONFIG.projects.filter(p=>{
+    const mc=activeCategory==='全部'||p.category===activeCategory;
+    if(!searchQuery)return mc;
+    const q=searchQuery.toLowerCase();
+    return mc&&(p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)||p.tags.some(t=>t.text.toLowerCase().includes(q))||(STATUS_LABEL[p.status]||'').includes(q));
+  });
+}
+function hl(t){
+  if(!searchQuery)return t;
+  const q=searchQuery.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return t.replace(new RegExp(`(${q})`,'gi'),'<mark style="background:var(--amber-bg);color:var(--amber-t);padding:0 2px;border-radius:2px">$1</mark>');
+}
+function renderSidebar(){
+  const cats=getCategories(),sb=document.getElementById('sidebar');
+  sb.innerHTML=`<div class="sidebar-section"><div class="sidebar-label">分類</div>${cats.map(c=>{
+    const n=c==='全部'?CONFIG.projects.length:CONFIG.projects.filter(p=>p.category===c).length;
+    return`<div class="sidebar-item${activeCategory===c?' active':''}" data-cat="${c}"><span class="sidebar-icon">${getCatIcon(c)}</span>${c}<span class="count">${n}</span></div>`;
+  }).join('')}</div>
+  <div class="sidebar-section" style="margin-top:auto;padding-top:1rem;border-top:1px solid var(--border-l)"><div class="sidebar-label">狀態</div>${['live','dev','plan'].map(s=>`<div class="sidebar-item" style="font-size:.78rem;gap:6px" data-status="${s}"><span style="width:7px;height:7px;border-radius:50%;background:var(--${s==='live'?'green':s==='dev'?'amber':'gray-tag'});flex-shrink:0"></span>${STATUS_LABEL[s]}<span class="count">${CONFIG.projects.filter(p=>p.status===s).length}</span></div>`).join('')}</div>`;
+  sb.querySelectorAll('[data-cat]').forEach(el=>el.addEventListener('click',()=>{activeCategory=el.dataset.cat;searchQuery='';document.getElementById('searchInput').value='';renderAll();closeMobileMenu()}));
+  sb.querySelectorAll('[data-status]').forEach(el=>el.addEventListener('click',()=>{activeCategory='全部';searchQuery=STATUS_LABEL[el.dataset.status];document.getElementById('searchInput').value=searchQuery;renderAll();closeMobileMenu()}));
+}
+function renderMain(){
+  const f=getFiltered(),m=document.getElementById('main');
+  m.innerHTML=`<div class="main-header"><div class="main-title">${activeCategory}</div><div class="main-count">${f.length} 個專案</div></div>${f.length===0?'<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">找不到符合的專案</div></div>':`<div class="card-grid">${f.map(p=>`<a class="card-link" href="${p.url}" target="_blank" rel="noopener"><div class="card"><div class="card-status status-${p.status}" title="${STATUS_LABEL[p.status]}"></div><div class="card-top"><div class="card-emoji" style="background:${p.iconBg}">${p.icon}</div><div class="card-info"><div class="card-name">${hl(p.name)}</div><div class="card-desc">${hl(p.desc)}</div></div></div><div class="card-tags">${p.tags.map(t=>`<span class="card-tag tag-${t.color}">${t.text}</span>`).join('')}</div></div></a>`).join('')}</div>`}`;
+}
+function renderAll(){renderSidebar();renderMain()}
+function closeMobileMenu(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open')}
+document.getElementById('menuBtn').addEventListener('click',()=>{document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('open')});
+document.getElementById('overlay').addEventListener('click',closeMobileMenu);
+document.getElementById('searchInput').addEventListener('input',e=>{searchQuery=e.target.value.trim();renderMain()});
+document.addEventListener('keydown',e=>{const si=document.getElementById('searchInput');if(e.key==='/'&&document.activeElement!==si){e.preventDefault();si.focus()}if(e.key==='Escape'){si.blur();searchQuery='';si.value='';renderMain()}});
+loadConfig();
+</script>
+</body>
+</html>
