@@ -167,6 +167,19 @@
       ]
     },
     {
+      "name": "薪資計算系統",
+      "desc": "居家醫療醫師薪資計算，匯入 HIS 患者表自動統計人數、查表算薪、車資計算。",
+      "url": "https://script.google.com/macros/s/AKfycbzCly60T6DNF_sfKkRut2jTQtR7mt6fQhiYoO8SsNYy0q_oQ-ldGLfZHqInXPm4TwU_/exec",
+      "icon": "💰",
+      "iconBg": "#FEF3C7",
+      "category": "居家醫療",
+      "status": "live",
+      "tags": [
+        { "text": "Apps Script", "color": "purple" },
+        { "text": "Google Sheets", "color": "green" }
+      ]
+    },
+    {
       "name": "線上簽名系統",
       "desc": "居家醫療訪視線上簽名，醫師傳連結、家屬手機簽名、自動記錄。",
       "url": "https://script.google.com/macros/s/AKfycbzr91bNmgV_HIBbpHiuKSXGwF4ZNnCZy0ZdAosl82NY1EpJ5EtZhHHus6U_VZsU5egOvg/exec",
