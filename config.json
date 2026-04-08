@@ -169,7 +169,7 @@
     {
       "name": "薪資計算系統",
       "desc": "居家醫療醫師薪資計算，匯入 HIS 患者表自動統計人數、查表算薪、車資計算。",
-      "url": "https://script.google.com/macros/s/AKfycbzCly60T6DNF_sfKkRut2jTQtR7mt6fQhiYoO8SsNYy0q_oQ-ldGLfZHqInXPm4TwU_/exec",
+      "url": "https://vocalpate.github.io/salary/",
       "icon": "💰",
       "iconBg": "#FEF3C7",
       "category": "居家醫療",

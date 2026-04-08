@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>居家薪資計算系統</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+
+    .header { background: #1a3a5c; color: #fff; padding: 12px 16px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 12px; }
+    .header h1 { font-size: 18px; font-weight: 600; flex: 1; }
+    .back-btn { color: #aac4e0; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 4px; }
+    .back-btn:hover { color: #fff; }
+    .tabs { display: flex; background: #1a3a5c; border-bottom: 2px solid #0d2137; overflow-x: auto; }
+    .tab { flex: 1; min-width: 70px; padding: 10px 8px; text-align: center; color: #aac4e0; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; transition: all .2s; white-space: nowrap; }
+    .tab.active { color: #fff; border-bottom-color: #4da6ff; background: rgba(255,255,255,.08); }
+
+    .page { display: none; padding: 16px; max-width: 800px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    .card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .card h3 { font-size: 16px; margin-bottom: 12px; color: #1a3a5c; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
+    select, input[type="text"], input[type="number"], input[type="file"] {
+      width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff;
+    }
+    select:focus, input:focus { outline: none; border-color: #4da6ff; }
+
+    .btn { display: inline-block; padding: 10px 20px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; transition: all .2s; }
+    .btn-primary { background: #1a3a5c; color: #fff; }
+    .btn-primary:hover { background: #2a5a8c; }
+    .btn-success { background: #28a745; color: #fff; }
+    .btn-success:hover { background: #218838; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+    .btn-outline { background: transparent; border: 1px solid #1a3a5c; color: #1a3a5c; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #eee; white-space: nowrap; }
+    th { background: #f0f4f8; color: #1a3a5c; font-weight: 600; position: sticky; top: 0; }
+    tr:hover { background: #f8fbff; }
+    .text-right { text-align: right; }
+    .text-left { text-align: left; }
+
+    .summary-box { background: #e8f4fd; border-radius: 10px; padding: 16px; margin: 16px 0; }
+    .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
+    .summary-row.total { font-size: 18px; font-weight: 700; color: #1a3a5c; border-top: 2px solid #1a3a5c; margin-top: 8px; padding-top: 12px; }
+
+    .self-pay-item { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .self-pay-item select, .self-pay-item input { width: auto; flex: 1; min-width: 80px; }
+
+    .date-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .date-tag { padding: 4px 10px; border-radius: 15px; font-size: 13px; cursor: pointer; border: 1px solid #ddd; background: #f8f8f8; transition: all .2s; }
+    .date-tag.selected { background: #1a3a5c; color: #fff; border-color: #1a3a5c; }
+
+    .toast { position: fixed; top: 60px; right: 16px; background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 14px; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    .toast.error { background: #dc3545; }
+
+    .loading { text-align: center; padding: 40px; color: #999; }
+    .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #ddd; border-top-color: #1a3a5c; border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media print {
+      .header, .tabs, .no-print { display: none !important; }
+      .page { display: block !important; max-width: 100%; }
+      .card { box-shadow: none; border: 1px solid #ddd; }
+      body { background: #fff; }
+    }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="https://vocalpate.github.io/" class="back-btn">&larr; Portal</a>
+  <h1>居家薪資計算系統</h1>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('calc')">薪資計算</div>
+  <div class="tab" onclick="switchTab('result')">計算結果</div>
+  <div class="tab" onclick="switchTab('history')">歷史紀錄</div>
+  <div class="tab" onclick="switchTab('settings')">設定</div>
+</div>
+
+<!-- 薪資計算頁 -->
+<div id="page-calc" class="page active">
+  <div class="card">
+    <h3>1. 基本資料</h3>
+    <div class="form-group">
+      <label>醫師</label>
+      <div style="display:flex; gap:8px;">
+        <select id="doctorSelect" style="flex:1;"><option value="">載入中...</option></select>
+        <button class="btn btn-outline btn-sm" onclick="promptAddDoctor()">+</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>年月（民國年/月）</label>
+      <div style="display:flex; gap:8px;">
+        <input type="number" id="inputYear" placeholder="如 115" style="flex:1;">
+        <input type="number" id="inputMonth" placeholder="如 3" style="flex:1;">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>2. 匯入 HIS 患者表</h3>
+    <div class="form-group">
+      <label>上傳 xlsx 檔案</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileUpload(this)">
+    </div>
+    <div id="importStatus" style="display:none; margin-top:8px; padding:10px; border-radius:8px; background:#e8f4fd; font-size:14px;"></div>
+  </div>
+
+  <div id="dailySection" style="display:none;">
+    <div class="card">
+      <h3>3. 每日明細</h3>
+      <p style="font-size:13px; color:#666; margin-bottom:12px;">系統已自動統計每日人數，請確認並填寫一戶多案數</p>
+      <div class="table-wrap">
+        <table id="dailyTable">
+          <thead>
+            <tr><th>日期</th><th>星期</th><th>人數</th><th>查表薪資</th><th>實際薪資</th><th>一戶多案</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>4. 自費項目</h3>
+      <div id="selfPayList"></div>
+      <button class="btn btn-outline btn-sm" onclick="addSelfPayRow()" style="margin-top:8px;">+ 新增自費項目</button>
+    </div>
+
+    <button class="btn btn-primary" onclick="doCalculate()" style="width:100%; padding:14px; font-size:16px; margin-top:8px;">
+      計算薪資
+    </button>
+  </div>
+</div>
+
+<!-- 計算結果頁 -->
+<div id="page-result" class="page">
+  <div id="resultContent">
+    <div class="empty-state">
+      <div class="icon">📊</div>
+      <p>尚未計算，請先到「薪資計算」頁匯入資料</p>
+    </div>
+  </div>
+</div>
+
+<!-- 歷史紀錄頁 -->
+<div id="page-history" class="page">
+  <div class="card">
+    <h3>歷史薪資紀錄</h3>
+    <div id="historyContent">
+      <div class="loading"><div class="spinner"></div><p>載入中...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 設定頁 -->
+<div id="page-settings" class="page">
+  <div class="card">
+    <h3>薪資對照表</h3>
+    <div class="table-wrap">
+      <table id="salaryTableEditor">
+        <thead><tr><th>人數</th><th>薪資</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="addSalaryRow()" style="margin-top:8px;">+ 新增列</button>
+  </div>
+
+  <div class="card">
+    <h3>出勤與車資設定</h3>
+    <div class="form-group">
+      <label>固定出勤日</label>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;" id="fixedDayCheckboxes">
+        <label style="font-size:15px;"><input type="checkbox" value="0"> 日</label>
+        <label style="font-size:15px;"><input type="checkbox" value="1" checked> 一</label>
+        <label style="font-size:15px;"><input type="checkbox" value="2"> 二</label>
+        <label style="font-size:15px;"><input type="checkbox" value="3"> 三</label>
+        <label style="font-size:15px;"><input type="checkbox" value="4" checked> 四</label>
+        <label style="font-size:15px;"><input type="checkbox" value="5"> 五</label>
+        <label style="font-size:15px;"><input type="checkbox" value="6"> 六</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>固定出勤日保底薪資</label>
+      <input type="number" id="settFixedMin" value="4000">
+    </div>
+    <div class="form-group">
+      <label>一般出勤保底薪資</label>
+      <input type="number" id="settGeneralMin" value="2300">
+    </div>
+    <div class="form-group">
+      <label>車資單價（元/趟）</label>
+      <input type="number" id="settCarFare" value="220">
+    </div>
+    <button class="btn btn-primary" onclick="saveAllSettings()" style="width:100%;">儲存設定</button>
+  </div>
+
+  <div class="card">
+    <h3>醫師名單管理</h3>
+    <div id="doctorList"></div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <input type="text" id="newDoctorName" placeholder="輸入醫師姓名" style="flex:1;">
+      <button class="btn btn-primary btn-sm" onclick="doAddDoctor()">新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// GAS API 設定（部署後更新此 URL）
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzCly60T6DNF_sfKkRut2jTQtR7mt6fQhiYoO8SsNYy0q_oQ-ldGLfZHqInXPm4TwU_/exec';
+
+// ============================================================
+// API 通訊層
+// ============================================================
+async function gasGet(action, params = {}) {
+  const url = new URL(GAS_URL);
+  url.searchParams.set('action', action);
+  for (const [k, v] of Object.entries(params)) {
+    url.searchParams.set(k, v);
+  }
+  const res = await fetch(url.toString(), { redirect: 'follow' });
+  return res.json();
+}
+
+async function gasPost(action, data) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action, ...data })
+  });
+  return res.json();
+}
+
+// ============================================================
+// 全域變數
+// ============================================================
+let currentSettings = null;
+let dailyData = [];
+let selfPayHistory = [];
+let lastResult = null;
+const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+// ============================================================
+// 頁面切換
+// ============================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.includes(
+      name === 'calc' ? '薪資計算' : name === 'result' ? '計算結果' : name === 'history' ? '歷史紀錄' : '設定'
+    ));
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+
+  if (name === 'history') loadHistory();
+  if (name === 'settings') loadSettings();
+}
+
+// ============================================================
+// Toast 提示
+// ============================================================
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ============================================================
+// 初始化
+// ============================================================
+window.onload = function() {
+  loadDoctors();
+  loadSettingsCache();
+  loadSelfPayHistory();
+};
+
+async function loadDoctors() {
+  try {
+    const list = await gasGet('getDoctors');
+    const sel = document.getElementById('doctorSelect');
+    sel.innerHTML = '<option value="">-- 選擇醫師 --</option>';
+    (list || []).forEach(name => {
+      sel.innerHTML += '<option value="' + name + '">' + name + '</option>';
+    });
+  } catch (err) {
+    showToast('載入醫師失敗', true);
+  }
+}
+
+async function loadSettingsCache() {
+  try {
+    const s = await gasGet('getSettings');
+    currentSettings = s;
+    if (s) {
+      document.getElementById('settFixedMin').value = s.fixedDayMinSalary;
+      document.getElementById('settGeneralMin').value = s.generalMinSalary;
+      document.getElementById('settCarFare').value = s.carFarePerTrip;
+    }
+  } catch (err) {
+    showToast('載入設定失敗', true);
+  }
+}
+
+async function loadSelfPayHistory() {
+  try {
+    const list = await gasGet('getSelfPayHistory');
+    selfPayHistory = list || [];
+  } catch (err) {
+    console.error('載入自費歷史失敗', err);
+  }
+}
+
+// ============================================================
+// 醫師管理
+// ============================================================
+async function promptAddDoctor() {
+  const name = prompt('請輸入醫師姓名：');
+  if (name && name.trim()) {
+    try {
+      await gasPost('addDoctor', { name: name.trim() });
+      await loadDoctors();
+      showToast('已新增醫師：' + name.trim());
+    } catch (err) {
+      showToast('新增失敗', true);
+    }
+  }
+}
+
+async function doAddDoctor() {
+  const input = document.getElementById('newDoctorName');
+  const name = input.value.trim();
+  if (!name) return;
+  try {
+    const list = await gasPost('addDoctor', { name });
+    await loadDoctors();
+    renderDoctorList(list);
+    input.value = '';
+    showToast('已新增醫師：' + name);
+  } catch (err) {
+    showToast('新增失敗', true);
+  }
+}
+
+function renderDoctorList(list) {
+  const el = document.getElementById('doctorList');
+  if (!list || list.length === 0) { el.innerHTML = '<p style="color:#999;">尚無醫師</p>'; return; }
+  el.innerHTML = list.map(n =>
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">' +
+    '<span>' + n + '</span>' +
+    '<button class="btn btn-danger btn-sm" onclick="doDeleteDoctor(\'' + n + '\')">刪除</button>' +
+    '</div>'
+  ).join('');
+}
+
+async function doDeleteDoctor(name) {
+  if (!confirm('確定刪除醫師「' + name + '」？')) return;
+  try {
+    const list = await gasPost('deleteDoctor', { name });
+    await loadDoctors();
+    renderDoctorList(list);
+    showToast('已刪除');
+  } catch (err) {
+    showToast('刪除失敗', true);
+  }
+}
+
+// ============================================================
+// 檔案匯入解析
+// ============================================================
+function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      parseHISData(rows);
+    } catch (err) {
+      showToast('檔案解析失敗：' + err.message, true);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseHISData(rows) {
+  let dateColIndex = 0;
+  let startRow = 0;
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const row = rows[i];
+    if (!row) continue;
+    for (let j = 0; j < row.length; j++) {
+      if (row[j] && String(row[j]).includes('門診日期')) {
+        dateColIndex = j;
+        startRow = i + 1;
+        break;
+      }
+    }
+    if (startRow > 0) break;
+  }
+
+  const dateCount = {};
+  for (let i = startRow; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[dateColIndex]) continue;
+    const dateStr = String(row[dateColIndex]).trim();
+    if (!dateStr || dateStr.length < 5) continue;
+    if (!dateCount[dateStr]) dateCount[dateStr] = 0;
+    dateCount[dateStr]++;
+  }
+
+  const dates = Object.keys(dateCount).sort();
+  if (dates.length === 0) {
+    showToast('找不到門診日期資料', true);
+    return;
+  }
+
+  const firstDate = dates[0];
+  const parts = firstDate.split('/');
+  if (parts.length >= 2) {
+    document.getElementById('inputYear').value = parts[0];
+    document.getElementById('inputMonth').value = parseInt(parts[1]);
+  }
+
+  dailyData = dates.map(d => {
+    const p = d.split('/');
+    const rocYear = parseInt(p[0]);
+    const month = parseInt(p[1]);
+    const day = parseInt(p[2]);
+    const adYear = rocYear + 1911;
+    const dateObj = new Date(adYear, month - 1, day);
+    const dow = dateObj.getDay();
+
+    return { date: d, day: day, dayOfWeek: dow, count: dateCount[d], multiHousehold: 0, selfPayItems: [] };
+  });
+
+  document.getElementById('importStatus').style.display = 'block';
+  document.getElementById('importStatus').innerHTML =
+    '✅ 匯入成功！共 <b>' + dates.length + '</b> 天，<b>' +
+    Object.values(dateCount).reduce((a, b) => a + b, 0) + '</b> 人次';
+  document.getElementById('dailySection').style.display = 'block';
+
+  renderDailyTable();
+}
+
+// ============================================================
+// 每日明細表格
+// ============================================================
+function renderDailyTable() {
+  if (!currentSettings) {
+    setTimeout(renderDailyTable, 500);
+    return;
+  }
+
+  const tbody = document.querySelector('#dailyTable tbody');
+  const maxInTable = Math.max(...Object.keys(currentSettings.salaryTable).map(Number));
+
+  tbody.innerHTML = dailyData.map((d, i) => {
+    const lookupCount = Math.min(d.count, maxInTable);
+    const tableSalary = currentSettings.salaryTable[lookupCount] || 0;
+    const isFixed = currentSettings.fixedDays.includes(d.dayOfWeek);
+    const minSalary = isFixed ? currentSettings.fixedDayMinSalary : currentSettings.generalMinSalary;
+    const actualSalary = Math.max(tableSalary, minSalary);
+    const highlight = actualSalary > tableSalary ? ' style="color:#e67e22;font-weight:600;" title="保底薪資"' : '';
+
+    return '<tr>' +
+      '<td>' + d.day + '日</td>' +
+      '<td>週' + dayNames[d.dayOfWeek] + (isFixed ? ' ⭐' : '') + '</td>' +
+      '<td>' + d.count + '</td>' +
+      '<td>' + tableSalary.toLocaleString() + '</td>' +
+      '<td' + highlight + '>' + actualSalary.toLocaleString() + '</td>' +
+      '<td><input type="number" min="0" value="' + d.multiHousehold + '" style="width:50px;text-align:center;padding:4px;" onchange="dailyData[' + i + '].multiHousehold=parseInt(this.value)||0"></td>' +
+      '</tr>';
+  }).join('');
+}
+
+// ============================================================
+// 自費項目
+// ============================================================
+function addSelfPayRow() {
+  const list = document.getElementById('selfPayList');
+  const div = document.createElement('div');
+  div.className = 'self-pay-item';
+
+  let optionsHtml = '<option value="">-- 選擇 --</option>';
+  selfPayHistory.forEach(h => {
+    optionsHtml += '<option value="' + h.name + '" data-amount="' + h.amount + '">' + h.name + ' ($' + h.amount + ')</option>';
+  });
+  optionsHtml += '<option value="__new__">手動輸入...</option>';
+
+  div.innerHTML =
+    '<select onchange="onSelfPaySelect(this)" style="min-width:120px;">' + optionsHtml + '</select>' +
+    '<input type="text" class="sp-name" placeholder="姓名" style="display:none;min-width:80px;">' +
+    '<input type="number" class="sp-amount" placeholder="金額" style="min-width:70px;">' +
+    '<div class="date-tags" style="display:flex;flex-wrap:wrap;gap:4px;"></div>' +
+    '<button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex-shrink:0;">✕</button>';
+
+  list.appendChild(div);
+
+  const tagsDiv = div.querySelector('.date-tags');
+  dailyData.forEach((d, di) => {
+    const tag = document.createElement('span');
+    tag.className = 'date-tag';
+    tag.textContent = d.day + '日';
+    tag.setAttribute('data-di', di);
+    tag.onclick = function() { this.classList.toggle('selected'); };
+    tagsDiv.appendChild(tag);
+  });
+}
+
+function onSelfPaySelect(sel) {
+  const row = sel.closest('.self-pay-item');
+  const nameInput = row.querySelector('.sp-name');
+  const amountInput = row.querySelector('.sp-amount');
+  if (sel.value === '__new__') {
+    nameInput.style.display = 'block';
+    nameInput.value = '';
+    amountInput.value = '';
+  } else if (sel.value) {
+    nameInput.style.display = 'none';
+    const opt = sel.options[sel.selectedIndex];
+    amountInput.value = opt.getAttribute('data-amount') || '';
+  } else {
+    nameInput.style.display = 'none';
+  }
+}
+
+function collectSelfPayItems() {
+  dailyData.forEach(d => d.selfPayItems = []);
+
+  const rows = document.querySelectorAll('.self-pay-item');
+  rows.forEach(row => {
+    const sel = row.querySelector('select');
+    const nameInput = row.querySelector('.sp-name');
+    const amountInput = row.querySelector('.sp-amount');
+    const amount = parseInt(amountInput.value) || 0;
+    if (amount === 0) return;
+
+    let name = sel.value === '__new__' ? nameInput.value.trim() : sel.value;
+    if (!name) return;
+
+    // 背景儲存自費歷史
+    gasPost('saveSelfPayItem', { name, amount }).catch(() => {});
+
+    const tags = row.querySelectorAll('.date-tag.selected');
+    tags.forEach(tag => {
+      const di = parseInt(tag.getAttribute('data-di'));
+      dailyData[di].selfPayItems.push({ name, amount });
+    });
+  });
+}
+
+// ============================================================
+// 計算薪資
+// ============================================================
+function doCalculate() {
+  const doctor = document.getElementById('doctorSelect').value;
+  const year = document.getElementById('inputYear').value;
+  const month = document.getElementById('inputMonth').value;
+
+  if (!doctor) { showToast('請選擇醫師'); return; }
+  if (!year || !month) { showToast('請填入年月'); return; }
+  if (dailyData.length === 0) { showToast('請先匯入患者表'); return; }
+
+  collectSelfPayItems();
+
+  const yearMonth = year + '/' + String(month).padStart(2, '0');
+  const result = calculateLocal(doctor, yearMonth);
+  lastResult = result;
+  renderResult(result);
+  switchTab('result');
+  showToast('計算完成');
+}
+
+function calculateLocal(doctor, yearMonth) {
+  const s = currentSettings;
+  const maxInTable = Math.max(...Object.keys(s.salaryTable).map(Number));
+
+  let totalSalary = 0, totalSelfPay = 0, totalPatients = 0, totalMultiHousehold = 0;
+  const details = [];
+
+  dailyData.forEach(d => {
+    const lookupCount = Math.min(d.count, maxInTable);
+    const tableSalary = d.count > maxInTable ? s.salaryTable[maxInTable] : (s.salaryTable[lookupCount] || 0);
+    const isFixed = s.fixedDays.includes(d.dayOfWeek);
+    const minSalary = isFixed ? s.fixedDayMinSalary : s.generalMinSalary;
+    const actualSalary = Math.max(tableSalary, minSalary);
+    let daySelfPay = 0;
+    (d.selfPayItems || []).forEach(item => daySelfPay += item.amount);
+
+    totalSalary += actualSalary;
+    totalSelfPay += daySelfPay;
+    totalPatients += d.count;
+    totalMultiHousehold += (d.multiHousehold || 0);
+
+    details.push({
+      date: d.date, day: d.day, dayOfWeek: d.dayOfWeek,
+      dayOfWeekName: dayNames[d.dayOfWeek],
+      count: d.count, tableSalary, isFixedDay: isFixed,
+      minSalary, actualSalary, multiHousehold: d.multiHousehold || 0,
+      selfPay: daySelfPay, selfPayItems: d.selfPayItems || []
+    });
+  });
+
+  const totalDays = dailyData.length;
+  const totalTrips = totalDays + totalPatients - totalMultiHousehold;
+  const totalCarFare = totalTrips * s.carFarePerTrip;
+
+  return {
+    doctor, yearMonth, details,
+    summary: {
+      totalDays, totalPatients, totalMultiHousehold,
+      totalSalary, totalSelfPay,
+      totalTrips, carFarePerTrip: s.carFarePerTrip, totalCarFare,
+      grandTotal: totalSalary + totalSelfPay + totalCarFare
+    }
+  };
+}
+
+// ============================================================
+// 顯示結果
+// ============================================================
+function renderResult(r) {
+  const el = document.getElementById('resultContent');
+  const s = r.summary;
+
+  let html = '<div class="card">' +
+    '<h3>' + r.yearMonth + ' — ' + r.doctor + ' 醫師薪資</h3>' +
+    '<div class="table-wrap"><table>' +
+    '<thead><tr><th>日期</th><th>星期</th><th>人數</th><th>薪資</th><th>多案</th><th>自費</th><th>備註</th></tr></thead><tbody>';
+
+  r.details.forEach(d => {
+    const note = d.tableSalary < d.minSalary ? '保底' : '';
+    const selfPayText = d.selfPay > 0 ? d.selfPay.toLocaleString() : '';
+    const selfPayNames = (d.selfPayItems || []).map(i => i.name).join(', ');
+
+    html += '<tr>' +
+      '<td>' + d.day + '日</td>' +
+      '<td>週' + d.dayOfWeekName + (d.isFixedDay ? '⭐' : '') + '</td>' +
+      '<td>' + d.count + '</td>' +
+      '<td>' + d.actualSalary.toLocaleString() + '</td>' +
+      '<td>' + (d.multiHousehold || '') + '</td>' +
+      '<td>' + selfPayText + '</td>' +
+      '<td class="text-left" style="font-size:12px;">' + (note ? note + ' ' : '') + selfPayNames + '</td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div></div>';
+
+  html += '<div class="summary-box">' +
+    '<div class="summary-row"><span>出勤天數</span><span>' + s.totalDays + ' 天</span></div>' +
+    '<div class="summary-row"><span>總人數</span><span>' + s.totalPatients + ' 人</span></div>' +
+    '<div class="summary-row"><span>一戶多案扣除</span><span>-' + s.totalMultiHousehold + ' 趟</span></div>' +
+    '<div class="summary-row"><span>看診薪資</span><span>$' + s.totalSalary.toLocaleString() + '</span></div>' +
+    '<div class="summary-row"><span>自費收入</span><span>$' + s.totalSelfPay.toLocaleString() + '</span></div>' +
+    '<div class="summary-row"><span>車資（' + s.totalTrips + ' 趟 × $' + s.carFarePerTrip + '）</span><span>$' + s.totalCarFare.toLocaleString() + '</span></div>' +
+    '<div class="summary-row total"><span>合計</span><span>$' + s.grandTotal.toLocaleString() + '</span></div>' +
+    '</div>';
+
+  html += '<div class="no-print" style="display:flex; gap:8px; flex-wrap:wrap;">' +
+    '<button class="btn btn-success" onclick="doSaveRecord()" style="flex:1;">儲存紀錄</button>' +
+    '<button class="btn btn-primary" onclick="window.print()" style="flex:1;">列印</button>' +
+    '<button class="btn btn-outline" onclick="exportExcel()" style="flex:1;">匯出 Excel</button>' +
+    '</div>';
+
+  el.innerHTML = html;
+}
+
+// ============================================================
+// 儲存紀錄
+// ============================================================
+async function doSaveRecord() {
+  if (!lastResult) return;
+  try {
+    const res = await gasPost('saveSalaryRecord', { data: lastResult });
+    showToast(res.result || '已儲存');
+  } catch (err) {
+    showToast('儲存失敗：' + err.message, true);
+  }
+}
+
+// ============================================================
+// 匯出 Excel
+// ============================================================
+function exportExcel() {
+  if (!lastResult) return;
+  const r = lastResult;
+  const s = r.summary;
+
+  const wb = XLSX.utils.book_new();
+  const wsData = [
+    [r.yearMonth + ' ' + r.doctor + ' 醫師薪資明細'],
+    [],
+    ['日期', '星期', '人數', '查表薪資', '實際薪資', '一戶多案', '自費', '備註']
+  ];
+
+  r.details.forEach(d => {
+    const note = d.isFixedDay && d.tableSalary < d.minSalary ? '固定出勤保底' :
+                 !d.isFixedDay && d.tableSalary < d.minSalary ? '一般出勤保底' : '';
+    wsData.push([d.date, '週' + d.dayOfWeekName, d.count, d.tableSalary, d.actualSalary, d.multiHousehold || 0, d.selfPay || 0, note]);
+  });
+
+  wsData.push([]);
+  wsData.push(['', '', '', '', '出勤天數', s.totalDays]);
+  wsData.push(['', '', '', '', '總人數', s.totalPatients]);
+  wsData.push(['', '', '', '', '一戶多案扣除', s.totalMultiHousehold]);
+  wsData.push(['', '', '', '', '看診薪資', s.totalSalary]);
+  wsData.push(['', '', '', '', '自費收入', s.totalSelfPay]);
+  wsData.push(['', '', '', '', '車資', s.totalCarFare]);
+  wsData.push(['', '', '', '', '合計', s.grandTotal]);
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 6 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, ws, '薪資明細');
+
+  XLSX.writeFile(wb, r.yearMonth.replace('/', '') + '_' + r.doctor + '_薪資.xlsx');
+  showToast('已匯出 Excel');
+}
+
+// ============================================================
+// 歷史紀錄
+// ============================================================
+async function loadHistory() {
+  const el = document.getElementById('historyContent');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  try {
+    const records = await gasGet('getHistory');
+    if (!records || records.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>尚無歷史紀錄</p></div>';
+      return;
+    }
+    let html = '<div class="table-wrap"><table>' +
+      '<thead><tr><th>年月</th><th>醫師</th><th>天數</th><th>人數</th><th>看診</th><th>自費</th><th>車資</th><th>合計</th></tr></thead><tbody>';
+    records.forEach(r => {
+      html += '<tr style="cursor:pointer;" onclick="viewHistoryDetail(\'' + r.yearMonth + '\',\'' + r.doctor + '\')">' +
+        '<td>' + r.yearMonth + '</td><td>' + r.doctor + '</td><td>' + r.totalDays + '</td><td>' + r.totalPatients + '</td>' +
+        '<td>$' + (r.totalSalary || 0).toLocaleString() + '</td><td>$' + (r.totalSelfPay || 0).toLocaleString() + '</td>' +
+        '<td>$' + (r.totalCarFare || 0).toLocaleString() + '</td><td style="font-weight:700;">$' + (r.grandTotal || 0).toLocaleString() + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+  } catch (err) {
+    el.innerHTML = '<p style="color:#dc3545;">載入失敗：' + err.message + '</p>';
+  }
+}
+
+async function viewHistoryDetail(yearMonth, doctor) {
+  try {
+    const details = await gasGet('getHistoryDetail', { yearMonth, doctor });
+    if (!details || details.length === 0) { showToast('查無明細'); return; }
+    let html = '<h3 style="margin-bottom:12px;">' + yearMonth + ' ' + doctor + ' 明細</h3>' +
+      '<div class="table-wrap"><table>' +
+      '<thead><tr><th>日期</th><th>星期</th><th>人數</th><th>查表</th><th>實際</th><th>多案</th><th>備註</th></tr></thead><tbody>';
+    details.forEach(d => {
+      html += '<tr><td>' + d.date + '</td><td>' + d.dayOfWeekName + '</td><td>' + d.count + '</td>' +
+        '<td>' + (d.tableSalary || 0).toLocaleString() + '</td><td>' + (d.actualSalary || 0).toLocaleString() + '</td>' +
+        '<td>' + (d.multiHousehold || '') + '</td><td class="text-left">' + (d.note || '') + '</td></tr>';
+    });
+    html += '</tbody></table></div>' +
+      '<button class="btn btn-outline" onclick="loadHistory()" style="margin-top:12px;">← 返回列表</button>';
+    document.getElementById('historyContent').innerHTML = html;
+  } catch (err) {
+    showToast('載入明細失敗', true);
+  }
+}
+
+// ============================================================
+// 設定頁
+// ============================================================
+async function loadSettings() {
+  try {
+    const s = await gasGet('getSettings');
+    if (!s) return;
+    currentSettings = s;
+
+    const tbody = document.querySelector('#salaryTableEditor tbody');
+    tbody.innerHTML = '';
+    const keys = Object.keys(s.salaryTable).sort((a, b) => Number(a) - Number(b));
+    keys.forEach(k => addSalaryRowWithData(k, s.salaryTable[k]));
+
+    document.querySelectorAll('#fixedDayCheckboxes input').forEach(cb => {
+      cb.checked = s.fixedDays.includes(parseInt(cb.value));
+    });
+
+    document.getElementById('settFixedMin').value = s.fixedDayMinSalary;
+    document.getElementById('settGeneralMin').value = s.generalMinSalary;
+    document.getElementById('settCarFare').value = s.carFarePerTrip;
+
+    const doctors = await gasGet('getDoctors');
+    renderDoctorList(doctors);
+  } catch (err) {
+    showToast('載入設定失敗', true);
+  }
+}
+
+function addSalaryRowWithData(count, salary) {
+  const tbody = document.querySelector('#salaryTableEditor tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td><input type="number" class="st-count" value="' + count + '" style="width:60px;text-align:center;padding:4px;"></td>' +
+    '<td><input type="number" class="st-salary" value="' + salary + '" style="width:100px;text-align:center;padding:4px;"></td>' +
+    '<td><button class="btn btn-danger btn-sm" onclick="this.closest(\'tr\').remove()">✕</button></td>';
+  tbody.appendChild(tr);
+}
+
+function addSalaryRow() {
+  addSalaryRowWithData('', '');
+}
+
+async function saveAllSettings() {
+  const salaryTable = {};
+  document.querySelectorAll('#salaryTableEditor tbody tr').forEach(tr => {
+    const count = parseInt(tr.querySelector('.st-count').value);
+    const salary = parseInt(tr.querySelector('.st-salary').value);
+    if (!isNaN(count) && !isNaN(salary)) salaryTable[count] = salary;
+  });
+
+  const fixedDays = [];
+  document.querySelectorAll('#fixedDayCheckboxes input:checked').forEach(cb => {
+    fixedDays.push(parseInt(cb.value));
+  });
+
+  const data = {
+    salaryTable,
+    fixedDays,
+    fixedDayMinSalary: parseInt(document.getElementById('settFixedMin').value) || 4000,
+    generalMinSalary: parseInt(document.getElementById('settGeneralMin').value) || 2300,
+    carFarePerTrip: parseInt(document.getElementById('settCarFare').value) || 220
+  };
+
+  try {
+    const res = await gasPost('saveSettings', { data });
+    currentSettings = data;
+    showToast(res.result || '已儲存');
+  } catch (err) {
+    showToast('儲存失敗：' + err.message, true);
+  }
+}
+</script>
+
+</body>
+</html>
