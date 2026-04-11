@@ -110,6 +110,19 @@ function bindEvents() {
         });
     });
 
+    // 自訂日期：填入時取消期間按鈕，清空時恢復預設（1年）
+    const startDateEl = document.getElementById('startDate');
+    startDateEl.addEventListener('change', () => {
+        if (startDateEl.value) {
+            // 有日期 → 取消所有按鈕 active
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        } else {
+            // 清空日期 → 還原為 1年
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.period-btn[data-years="1"]')?.classList.add('active');
+        }
+    });
+
     // 加碼份數按鈕
     document.querySelectorAll('.tranche-btn').forEach(btn => {
         btn.addEventListener('click', () => {
