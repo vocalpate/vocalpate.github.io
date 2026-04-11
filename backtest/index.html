@@ -26,9 +26,14 @@
                 <button class="period-btn active" data-years="0">全部</button>
             </div>
             <div class="date-input-row">
-                <label>自訂起始日：</label>
-                <input type="date" id="startDate" placeholder="選填">
+                <label>起始日：</label>
+                <input type="date" id="startDate">
             </div>
+            <div class="date-input-row">
+                <label>結束日：</label>
+                <input type="date" id="endDate">
+            </div>
+            <div class="period-hint" id="periodHint">全部歷史資料</div>
         </section>
 
         <!-- 策略參數 -->
@@ -98,15 +103,6 @@
                     </div>
                 </div>
 
-                <div class="param-group">
-                    <label>觸發模式</label>
-                    <div class="input-row">
-                        <select id="triggerMode">
-                            <option value="percent" selected>跌幅%（從近期高點）</option>
-                            <option value="absolute">絕對價格</option>
-                        </select>
-                    </div>
-                </div>
             </details>
         </section>
 
@@ -140,10 +136,39 @@
                 </div>
             </div>
 
-            <div class="extra-stats">
-                <div><strong>總投入：</strong><span id="totalInvested">--</span></div>
-                <div><strong>最終資產：</strong><span id="finalAsset">--</span></div>
-                <div><strong>加碼觸發：</strong><span id="triggerCount">--</span></div>
+            <!-- 三策略財務比較 -->
+            <table class="finance-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="col-yours">你的策略</th>
+                        <th class="col-lump">一次投入</th>
+                        <th class="col-dca">純定期定額</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>總投入</td>
+                        <td id="yourCapital">--</td>
+                        <td id="lumpCapital">--</td>
+                        <td id="dcaCapital">--</td>
+                    </tr>
+                    <tr>
+                        <td>剩餘現金</td>
+                        <td id="yourCash">--</td>
+                        <td id="lumpCash">--</td>
+                        <td id="dcaCash">--</td>
+                    </tr>
+                    <tr>
+                        <td>最終資產</td>
+                        <td id="yourFinal">--</td>
+                        <td id="lumpFinal">--</td>
+                        <td id="dcaFinal">--</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="trigger-stats">
+                <strong>加碼觸發：</strong><span id="triggerCount">--</span>
             </div>
         </section>
 

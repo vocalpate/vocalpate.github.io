@@ -333,13 +333,58 @@ header h1 {
 .lump-sum .result-value { color: var(--success); }
 .dca .result-value { color: var(--warning); }
 
-.extra-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.85rem;
-    padding-top: 10px;
+/* 財務比較表 */
+.finance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    margin-top: 12px;
     border-top: 1px solid var(--border);
+}
+
+.finance-table th,
+.finance-table td {
+    padding: 6px 4px;
+    text-align: center;
+}
+
+.finance-table th:first-child,
+.finance-table td:first-child {
+    text-align: left;
+    color: var(--text-light);
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.finance-table thead th {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+}
+
+.finance-table .col-yours { color: var(--primary); }
+.finance-table .col-lump { color: var(--success); }
+.finance-table .col-dca { color: var(--warning); }
+
+.finance-table tbody td {
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.trigger-stats {
+    font-size: 0.85rem;
+    padding-top: 8px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+}
+
+/* 區間提示文字 */
+.period-hint {
+    font-size: 0.75rem;
+    color: var(--primary);
+    margin-top: 6px;
+    min-height: 18px;
 }
 
 /* 圖表 */
