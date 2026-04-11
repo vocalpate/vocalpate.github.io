@@ -6,10 +6,20 @@
 // ===== 全域變數 =====
 let stockData = null;
 let assetChart = null;
+let trancheCount = 2; // 預設2份
+
+// 各份加碼預設值（跌幅閾值%, 動用現金%）
+const TRANCHE_DEFAULTS = [
+    { threshold: 10, ratio: 30 },  // 第一份：跌10%，動用30%
+    { threshold: 20, ratio: 50 },  // 第二份：跌20%，動用50%
+    { threshold: 30, ratio: 70 },  // 第三份：跌30%，動用70%
+    { threshold: 40, ratio: 100 }, // 第四份：跌40%，動用100%
+];
 
 // ===== 初始化 =====
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
+    renderTranches(trancheCount);
     bindEvents();
 });
 
@@ -27,18 +37,62 @@ async function loadData() {
     }
 }
 
+// ===== 動態產生加碼份數 UI =====
+function renderTranches(count) {
+    trancheCount = count;
+    const container = document.getElementById('trancheSettings');
+
+    if (count === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const chineseNums = ['一', '二', '三', '四'];
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        const def = TRANCHE_DEFAULTS[i];
+        html += `
+        <div class="tranche-row">
+            <span class="tranche-label">第${chineseNums[i]}份加碼</span>
+            <div class="tranche-inputs">
+                <div class="tranche-field">
+                    <span class="tranche-field-label">跌幅觸發</span>
+                    <div class="slider-row">
+                        <input type="range" id="dip${i}Threshold" min="1" max="60" value="${def.threshold}">
+                        <span class="slider-value" id="dip${i}ThresholdVal">-${def.threshold}%</span>
+                    </div>
+                </div>
+                <div class="tranche-field">
+                    <span class="tranche-field-label">動用現金</span>
+                    <div class="slider-row">
+                        <input type="range" id="dip${i}Ratio" min="5" max="100" value="${def.ratio}">
+                        <span class="slider-value" id="dip${i}RatioVal">${def.ratio}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+    container.innerHTML = html;
+
+    // 綁定新產生的 slider 即時更新
+    for (let i = 0; i < count; i++) {
+        const thEl = document.getElementById(`dip${i}Threshold`);
+        const thVal = document.getElementById(`dip${i}ThresholdVal`);
+        const raEl = document.getElementById(`dip${i}Ratio`);
+        const raVal = document.getElementById(`dip${i}RatioVal`);
+
+        thEl.addEventListener('input', () => { thVal.textContent = `-${thEl.value}%`; });
+        raEl.addEventListener('input', () => { raVal.textContent = `${raEl.value}%`; });
+    }
+}
+
 // ===== 事件綁定 =====
 function bindEvents() {
-    // Slider 即時顯示數值
+    // 基本 Slider 即時顯示
     const sliders = [
         { id: 'initialRatio', display: 'initialRatioVal', suffix: '%' },
         { id: 'monthlyRatio', display: 'monthlyRatioVal', suffix: '%' },
-        { id: 'dip1Threshold', display: 'dip1ThresholdVal', prefix: '-', suffix: '%' },
-        { id: 'dip1Ratio', display: 'dip1RatioVal', suffix: '%' },
-        { id: 'dip2Threshold', display: 'dip2ThresholdVal', prefix: '-', suffix: '%' },
-        { id: 'dip2Ratio', display: 'dip2RatioVal', suffix: '%' },
     ];
-
     sliders.forEach(s => {
         const el = document.getElementById(s.id);
         const display = document.getElementById(s.display);
@@ -47,20 +101,22 @@ function bindEvents() {
         });
     });
 
-    // 區間按鈕
+    // 回測區間按鈕
     document.querySelectorAll('.period-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            // 清除自訂日期
             document.getElementById('startDate').value = '';
         });
     });
 
-    // 觸發模式切換
-    document.getElementById('triggerMode').addEventListener('change', (e) => {
-        const absoluteInputs = document.querySelector('.absolute-price-inputs');
-        absoluteInputs.style.display = e.target.value === 'absolute' ? 'block' : 'none';
+    // 加碼份數按鈕
+    document.querySelectorAll('.tranche-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tranche-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderTranches(parseInt(btn.dataset.count));
+        });
     });
 
     // 執行回測
@@ -69,19 +125,24 @@ function bindEvents() {
 
 // ===== 讀取參數 =====
 function getParams() {
+    // 讀取各份加碼設定，並按閾值由小到大排序
+    const tranches = [];
+    for (let i = 0; i < trancheCount; i++) {
+        tranches.push({
+            threshold: parseInt(document.getElementById(`dip${i}Threshold`).value) / 100,
+            ratio: parseInt(document.getElementById(`dip${i}Ratio`).value) / 100,
+            index: i, // 保留原始順序供顯示用
+        });
+    }
+    tranches.sort((a, b) => a.threshold - b.threshold);
+
     return {
         initialCapital: parseFloat(document.getElementById('initialCapital').value) * 10000,
         initialRatio: parseInt(document.getElementById('initialRatio').value) / 100,
         monthlyCash: parseFloat(document.getElementById('monthlyCash').value) * 10000,
         monthlyRatio: parseInt(document.getElementById('monthlyRatio').value) / 100,
-        dip1Threshold: parseInt(document.getElementById('dip1Threshold').value) / 100,
-        dip1Ratio: parseInt(document.getElementById('dip1Ratio').value) / 100,
-        dip2Threshold: parseInt(document.getElementById('dip2Threshold').value) / 100,
-        dip2Ratio: parseInt(document.getElementById('dip2Ratio').value) / 100,
         feeDiscount: parseInt(document.getElementById('feeDiscount').value) / 10,
-        triggerMode: document.getElementById('triggerMode').value,
-        dip1Price: parseFloat(document.getElementById('dip1Price').value),
-        dip2Price: parseFloat(document.getElementById('dip2Price').value),
+        tranches,
     };
 }
 
@@ -92,12 +153,10 @@ function getBacktestData() {
     let data = stockData.data;
     let startDate = null;
 
-    // 優先用自訂日期
     const customDate = document.getElementById('startDate').value;
     if (customDate) {
         startDate = customDate;
     } else {
-        // 用按鈕選擇
         const activeBtn = document.querySelector('.period-btn.active');
         const years = parseInt(activeBtn?.dataset.years || '0');
         if (years > 0) {
@@ -126,14 +185,15 @@ function backtestStrategy(data, params) {
     let cash = params.initialCapital;
     let holdings = 0;
     let recentHigh = data[0].close;
-    let dip1Triggered = false;
-    let dip2Triggered = false;
     let totalInvested = 0;
     let currentMonth = '';
     const triggers = [];
     const assetHistory = [];
 
-    // 第一天投入
+    // 每份加碼的觸發狀態（false = 尚未觸發）
+    const trancheTriggered = new Array(params.tranches.length).fill(false);
+
+    // 第一天：依初始投入比例買入
     const initialBuy = cash * params.initialRatio;
     if (initialBuy > 0) {
         const fee = calcBuyFee(initialBuy, params.feeDiscount);
@@ -149,10 +209,10 @@ function backtestStrategy(data, params) {
         const day = data[i];
         const dayMonth = day.date.substring(0, 7); // YYYY-MM
 
-        // 每月第一個交易日
+        // 每月第一個交易日：加入月薪並定期定額投入
         if (dayMonth !== currentMonth) {
             currentMonth = dayMonth;
-            if (i > 0) { // 跳過第一天（已處理初始投入）
+            if (i > 0) {
                 cash += params.monthlyCash;
                 const monthlyBuy = params.monthlyCash * params.monthlyRatio;
                 if (monthlyBuy > 0 && cash >= monthlyBuy) {
@@ -167,71 +227,42 @@ function backtestStrategy(data, params) {
             }
         }
 
-        // 更新高點 & 重置觸發
+        // 創新高 → 重置所有份數的觸發狀態
         if (day.close > recentHigh) {
             recentHigh = day.close;
-            dip1Triggered = false;
-            dip2Triggered = false;
+            trancheTriggered.fill(false);
         }
 
-        // 檢查逢低/大跌觸發
-        let shouldTriggerDip1 = false;
-        let shouldTriggerDip2 = false;
+        // 計算目前跌幅（從近期高點）
+        const drawdown = (day.close - recentHigh) / recentHigh;
 
-        if (params.triggerMode === 'percent') {
-            const drawdown = (day.close - recentHigh) / recentHigh;
-            shouldTriggerDip1 = drawdown <= -params.dip1Threshold;
-            shouldTriggerDip2 = drawdown <= -params.dip2Threshold;
-        } else {
-            shouldTriggerDip1 = day.close <= params.dip1Price;
-            shouldTriggerDip2 = day.close <= params.dip2Price;
-        }
-
-        // 第一份逢低加碼
-        if (shouldTriggerDip1 && !dip1Triggered) {
-            const buyAmount = cash * params.dip1Ratio;
-            if (buyAmount > 0) {
-                const fee = calcBuyFee(buyAmount, params.feeDiscount);
-                const shares = Math.floor(buyAmount / day.close);
-                if (shares > 0 && cash >= shares * day.close + fee) {
-                    holdings += shares;
-                    cash -= (shares * day.close + fee);
-                    totalInvested += shares * day.close;
-                    triggers.push({
-                        date: day.date,
-                        type: 'dip1',
-                        price: day.close,
-                        amount: shares * day.close,
-                        drawdown: ((day.close - recentHigh) / recentHigh * 100).toFixed(1),
-                    });
+        // 逐份檢查是否觸發加碼
+        for (let t = 0; t < params.tranches.length; t++) {
+            const tranche = params.tranches[t];
+            if (drawdown <= -tranche.threshold && !trancheTriggered[t]) {
+                const buyAmount = cash * tranche.ratio;
+                if (buyAmount > 0) {
+                    const fee = calcBuyFee(buyAmount, params.feeDiscount);
+                    const shares = Math.floor(buyAmount / day.close);
+                    if (shares > 0 && cash >= shares * day.close + fee) {
+                        holdings += shares;
+                        cash -= (shares * day.close + fee);
+                        totalInvested += shares * day.close;
+                        triggers.push({
+                            date: day.date,
+                            type: `dip${t}`,
+                            trancheIndex: t,
+                            price: day.close,
+                            amount: shares * day.close,
+                            drawdown: (drawdown * 100).toFixed(1),
+                        });
+                    }
                 }
+                trancheTriggered[t] = true;
             }
-            dip1Triggered = true;
         }
 
-        // 第二份大跌加碼
-        if (shouldTriggerDip2 && !dip2Triggered) {
-            const buyAmount = cash * params.dip2Ratio;
-            if (buyAmount > 0) {
-                const fee = calcBuyFee(buyAmount, params.feeDiscount);
-                const shares = Math.floor(buyAmount / day.close);
-                if (shares > 0 && cash >= shares * day.close + fee) {
-                    holdings += shares;
-                    cash -= (shares * day.close + fee);
-                    totalInvested += shares * day.close;
-                    triggers.push({
-                        date: day.date,
-                        type: 'dip2',
-                        price: day.close,
-                        amount: shares * day.close,
-                        drawdown: ((day.close - recentHigh) / recentHigh * 100).toFixed(1),
-                    });
-                }
-            }
-            dip2Triggered = true;
-        }
-
-        // 記錄資產
+        // 記錄當天總資產
         assetHistory.push({
             date: day.date,
             value: holdings * day.close + cash,
@@ -249,7 +280,7 @@ function backtestLumpSum(data, params) {
     let currentMonth = '';
     const assetHistory = [];
 
-    // 第一天全部投入
+    // 第一天全部買入
     const fee = calcBuyFee(cash, params.feeDiscount);
     const shares = Math.floor(cash / data[0].close);
     if (shares > 0) {
@@ -267,7 +298,7 @@ function backtestLumpSum(data, params) {
             currentMonth = dayMonth;
             if (i > 0) {
                 cash += params.monthlyCash;
-                const buyAmount = params.monthlyCash; // 全額投入
+                const buyAmount = params.monthlyCash;
                 const fee2 = calcBuyFee(buyAmount, params.feeDiscount);
                 const shares2 = Math.floor(buyAmount / day.close);
                 if (shares2 > 0 && cash >= shares2 * day.close + fee2) {
@@ -295,7 +326,6 @@ function backtestDCA(data, params) {
     let currentMonth = '';
     const assetHistory = [];
 
-    // 第一天不投入，等每月定期定額
     for (let i = 0; i < data.length; i++) {
         const day = data[i];
         const dayMonth = day.date.substring(0, 7);
@@ -305,7 +335,6 @@ function backtestDCA(data, params) {
             if (i > 0) {
                 cash += params.monthlyCash;
             }
-            // 每月固定投入（用 monthlyRatio 比例）
             const buyAmount = (i === 0 ? params.initialCapital : params.monthlyCash) * params.monthlyRatio;
             if (buyAmount > 0 && cash >= buyAmount) {
                 const fee = calcBuyFee(buyAmount, params.feeDiscount);
@@ -334,7 +363,7 @@ function calcMetrics(assetHistory, totalInvested) {
     const finalValue = assetHistory[assetHistory.length - 1].value;
     const totalReturn = (finalValue - totalInvested) / totalInvested;
 
-    // 年化報酬 CAGR
+    // CAGR
     const startDate = new Date(assetHistory[0].date);
     const endDate = new Date(assetHistory[assetHistory.length - 1].date);
     const years = (endDate - startDate) / (365.25 * 24 * 60 * 60 * 1000);
@@ -365,14 +394,7 @@ function calcMetrics(assetHistory, totalInvested) {
     const annualizedStd = stdDev * Math.sqrt(252);
     const sharpe = annualizedStd > 0 ? (annualizedReturn - riskFreeRate) / annualizedStd : 0;
 
-    return {
-        finalValue,
-        totalReturn,
-        cagr,
-        maxDrawdown,
-        sharpe,
-        totalInvested,
-    };
+    return { finalValue, totalReturn, cagr, maxDrawdown, sharpe, totalInvested };
 }
 
 // ===== 執行回測 =====
@@ -385,27 +407,24 @@ function runBacktest() {
 
     const params = getParams();
 
-    // 三種策略回測
     const yourResult = backtestStrategy(data, params);
     const lumpResult = backtestLumpSum(data, params);
     const dcaResult = backtestDCA(data, params);
 
-    // 計算指標
     const yourMetrics = calcMetrics(yourResult.assetHistory, yourResult.totalInvested);
     const lumpMetrics = calcMetrics(lumpResult.assetHistory, lumpResult.totalInvested);
     const dcaMetrics = calcMetrics(dcaResult.assetHistory, dcaResult.totalInvested);
 
-    // 顯示結果
-    displayResults(yourMetrics, lumpMetrics, dcaMetrics, yourResult);
+    displayResults(yourMetrics, lumpMetrics, dcaMetrics, yourResult, params);
     displayTriggerLog(yourResult.triggers);
-    // 圖表延遲渲染，避免阻塞 UI
+    // 延遲渲染圖表，避免阻塞 UI
     setTimeout(() => {
         drawChart(yourResult.assetHistory, lumpResult.assetHistory, dcaResult.assetHistory, yourResult.triggers);
     }, 100);
 }
 
 // ===== 顯示結果 =====
-function displayResults(yours, lump, dca, yourResult) {
+function displayResults(yours, lump, dca, yourResult, params) {
     document.getElementById('resultsSection').style.display = 'block';
 
     // 你的策略
@@ -429,8 +448,18 @@ function displayResults(yours, lump, dca, yourResult) {
     // 額外統計
     document.getElementById('totalInvested').textContent = formatMoney(yours.totalInvested);
     document.getElementById('finalAsset').textContent = formatMoney(yours.finalValue);
-    document.getElementById('triggerCount').textContent =
-        `逢低 ${yourResult.triggers.filter(t => t.type === 'dip1').length} 次 / 大跌 ${yourResult.triggers.filter(t => t.type === 'dip2').length} 次`;
+
+    // 加碼觸發次數（依份數動態顯示）
+    if (params.tranches.length === 0) {
+        document.getElementById('triggerCount').textContent = '不加碼';
+    } else {
+        const chineseNums = ['一', '二', '三', '四'];
+        const counts = params.tranches.map((_, i) =>
+            yourResult.triggers.filter(t => t.trancheIndex === i).length
+        );
+        document.getElementById('triggerCount').textContent =
+            counts.map((c, i) => `第${chineseNums[i]}份 ${c}次`).join(' / ');
+    }
 }
 
 // ===== 繪製圖表 =====
@@ -438,10 +467,7 @@ function drawChart(yourHistory, lumpHistory, dcaHistory, triggers) {
     document.getElementById('chartSection').style.display = 'block';
 
     const ctx = document.getElementById('assetChart').getContext('2d');
-
-    if (assetChart) {
-        assetChart.destroy();
-    }
+    if (assetChart) assetChart.destroy();
 
     // 採樣（降低點數提升效能，手機端重要）
     const maxPoints = 300;
@@ -458,13 +484,6 @@ function drawChart(yourHistory, lumpHistory, dcaHistory, triggers) {
         lumpData.push(lumpHistory[i]?.value || null);
         dcaData.push(dcaHistory[i]?.value || null);
     }
-
-    // 加碼標記點
-    const triggerPoints = triggers.map(t => ({
-        x: t.date,
-        y: yourHistory.find(h => h.date === t.date)?.value || 0,
-        type: t.type,
-    }));
 
     assetChart = new Chart(ctx, {
         type: 'line',
@@ -503,10 +522,7 @@ function drawChart(yourHistory, lumpHistory, dcaHistory, triggers) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
+            interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: {
                     position: 'top',
@@ -523,10 +539,7 @@ function drawChart(yourHistory, lumpHistory, dcaHistory, triggers) {
             scales: {
                 x: {
                     display: true,
-                    ticks: {
-                        maxTicksLimit: 6,
-                        font: { size: 10 },
-                    },
+                    ticks: { maxTicksLimit: 6, font: { size: 10 } },
                 },
                 y: {
                     display: true,
@@ -550,11 +563,12 @@ function displayTriggerLog(triggers) {
         return;
     }
 
+    const chineseNums = ['一', '二', '三', '四'];
     section.style.display = 'block';
     list.innerHTML = triggers.map(t => `
         <div class="trigger-item">
-            <span class="trigger-type ${t.type}">
-                ${t.type === 'dip1' ? '逢低' : '大跌'} ${t.drawdown}%
+            <span class="trigger-type dip${t.trancheIndex}">
+                第${chineseNums[t.trancheIndex] || (t.trancheIndex + 1)}份 ${t.drawdown}%
             </span>
             <span>${t.date}</span>
             <span>$${(t.price).toFixed(1)} 買 ${formatMoney(t.amount)}</span>
