@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0050正2 投資策略回測工具</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>0050正2 回測工具</h1>
+            <p class="subtitle">投資策略歷史模擬</p>
+        </header>
+
+        <!-- 回測區間 -->
+        <section class="card">
+            <h2>回測區間</h2>
+            <div class="period-buttons">
+                <button class="period-btn" data-years="1">1年</button>
+                <button class="period-btn" data-years="3">3年</button>
+                <button class="period-btn" data-years="5">5年</button>
+                <button class="period-btn" data-years="10">10年</button>
+                <button class="period-btn active" data-years="0">全部</button>
+            </div>
+            <div class="date-input-row">
+                <label>自訂起始日：</label>
+                <input type="date" id="startDate" placeholder="選填">
+            </div>
+        </section>
+
+        <!-- 策略參數 -->
+        <section class="card">
+            <h2>策略參數</h2>
+
+            <div class="param-group">
+                <label>初始資金（萬）</label>
+                <div class="input-row">
+                    <input type="number" id="initialCapital" value="100" min="1" step="10">
+                    <span class="unit">萬</span>
+                </div>
+            </div>
+
+            <div class="param-group">
+                <label>初始投入比例</label>
+                <div class="slider-row">
+                    <input type="range" id="initialRatio" min="0" max="100" value="50">
+                    <span class="slider-value" id="initialRatioVal">50%</span>
+                </div>
+            </div>
+
+            <div class="param-group">
+                <label>每月現金（萬）</label>
+                <div class="input-row">
+                    <input type="number" id="monthlyCash" value="3" min="0" step="0.5">
+                    <span class="unit">萬</span>
+                </div>
+            </div>
+
+            <div class="param-group">
+                <label>每月投入比例</label>
+                <div class="slider-row">
+                    <input type="range" id="monthlyRatio" min="0" max="100" value="80">
+                    <span class="slider-value" id="monthlyRatioVal">80%</span>
+                </div>
+            </div>
+
+            <!-- 進階設定 -->
+            <details class="advanced-settings">
+                <summary>進階設定（逢低加碼）</summary>
+
+                <div class="param-group">
+                    <label>逢低閾值（第一份）</label>
+                    <div class="slider-row">
+                        <input type="range" id="dip1Threshold" min="5" max="30" value="10">
+                        <span class="slider-value" id="dip1ThresholdVal">-10%</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>逢低動用現金比例</label>
+                    <div class="slider-row">
+                        <input type="range" id="dip1Ratio" min="10" max="100" value="30">
+                        <span class="slider-value" id="dip1RatioVal">30%</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>大跌閾值（第二份）</label>
+                    <div class="slider-row">
+                        <input type="range" id="dip2Threshold" min="10" max="50" value="20">
+                        <span class="slider-value" id="dip2ThresholdVal">-20%</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>大跌動用現金比例</label>
+                    <div class="slider-row">
+                        <input type="range" id="dip2Ratio" min="10" max="100" value="50">
+                        <span class="slider-value" id="dip2RatioVal">50%</span>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>手續費折扣</label>
+                    <div class="input-row">
+                        <select id="feeDiscount">
+                            <option value="1">1折</option>
+                            <option value="2">2折</option>
+                            <option value="3">3折</option>
+                            <option value="5">5折</option>
+                            <option value="6" selected>6折</option>
+                            <option value="10">全額（不打折）</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <label>觸發模式</label>
+                    <div class="input-row">
+                        <select id="triggerMode">
+                            <option value="percent" selected>跌幅%（從近期高點）</option>
+                            <option value="absolute">絕對價格</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="param-group absolute-price-inputs" style="display:none">
+                    <label>第一份觸發價格</label>
+                    <input type="number" id="dip1Price" value="100" step="1">
+                    <label>第二份觸發價格</label>
+                    <input type="number" id="dip2Price" value="80" step="1">
+                </div>
+            </details>
+        </section>
+
+        <!-- 執行按鈕 -->
+        <button class="run-btn" id="runBacktest">執行回測</button>
+
+        <!-- 結果摘要 -->
+        <section class="card results-section" id="resultsSection" style="display:none">
+            <h2>回測結果</h2>
+            <div class="results-grid">
+                <div class="result-card your-strategy">
+                    <h3>你的策略</h3>
+                    <div class="result-value" id="yourReturn">--</div>
+                    <div class="result-detail">CAGR: <span id="yourCAGR">--</span></div>
+                    <div class="result-detail">最大回撤: <span id="yourDrawdown">--</span></div>
+                    <div class="result-detail">夏普: <span id="yourSharpe">--</span></div>
+                </div>
+                <div class="result-card lump-sum">
+                    <h3>一次投入</h3>
+                    <div class="result-value" id="lumpReturn">--</div>
+                    <div class="result-detail">CAGR: <span id="lumpCAGR">--</span></div>
+                    <div class="result-detail">最大回撤: <span id="lumpDrawdown">--</span></div>
+                    <div class="result-detail">夏普: <span id="lumpSharpe">--</span></div>
+                </div>
+                <div class="result-card dca">
+                    <h3>純定期定額</h3>
+                    <div class="result-value" id="dcaReturn">--</div>
+                    <div class="result-detail">CAGR: <span id="dcaCAGR">--</span></div>
+                    <div class="result-detail">最大回撤: <span id="dcaDrawdown">--</span></div>
+                    <div class="result-detail">夏普: <span id="dcaSharpe">--</span></div>
+                </div>
+            </div>
+
+            <div class="extra-stats">
+                <div><strong>總投入：</strong><span id="totalInvested">--</span></div>
+                <div><strong>最終資產：</strong><span id="finalAsset">--</span></div>
+                <div><strong>加碼觸發：</strong><span id="triggerCount">--</span></div>
+            </div>
+        </section>
+
+        <!-- 圖表 -->
+        <section class="card chart-section" id="chartSection" style="display:none">
+            <h2>資產曲線</h2>
+            <div class="chart-container">
+                <canvas id="assetChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 加碼紀錄 -->
+        <section class="card" id="triggerLog" style="display:none">
+            <h2>加碼紀錄</h2>
+            <div class="trigger-list" id="triggerList"></div>
+        </section>
+
+        <footer>
+            <p>資料來源：FinMind API | 僅供參考，不構成投資建議</p>
+            <p id="dataInfo"></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

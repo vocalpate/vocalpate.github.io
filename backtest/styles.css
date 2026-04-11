@@ -1,0 +1,327 @@
+/* 基礎設定 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #f59e0b;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+}
+
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+/* Header */
+header {
+    text-align: center;
+    padding: 20px 0 10px;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+/* Card */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+}
+
+.card h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text);
+}
+
+/* 回測區間按鈕 */
+.period-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.period-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.period-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.period-btn:hover:not(.active) {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* 日期輸入 */
+.date-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-input-row label {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    white-space: nowrap;
+}
+
+.date-input-row input[type="date"] {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+/* 參數群組 */
+.param-group {
+    margin-bottom: 14px;
+}
+
+.param-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-light);
+    margin-bottom: 4px;
+}
+
+.input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-row input[type="number"] {
+    width: 100px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.input-row select {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--card-bg);
+}
+
+.unit {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+/* Slider */
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-row input[type="range"] {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 3px;
+    background: var(--border);
+    outline: none;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+}
+
+.slider-value {
+    min-width: 40px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--primary);
+}
+
+/* 進階設定 */
+.advanced-settings {
+    margin-top: 16px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+}
+
+.advanced-settings summary {
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--primary);
+    margin-bottom: 12px;
+}
+
+/* 執行按鈕 */
+.run-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: background 0.2s;
+    box-shadow: var(--shadow-md);
+}
+
+.run-btn:hover {
+    background: var(--primary-dark);
+}
+
+.run-btn:active {
+    transform: scale(0.98);
+}
+
+/* 結果區 */
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.result-card {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+}
+
+.result-card h3 {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-bottom: 4px;
+}
+
+.result-card .result-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.result-card .result-detail {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+.your-strategy .result-value { color: var(--primary); }
+.lump-sum .result-value { color: var(--success); }
+.dca .result-value { color: var(--warning); }
+
+.extra-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+/* 圖表 */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 250px;
+}
+
+/* 加碼紀錄 */
+.trigger-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.trigger-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+}
+
+.trigger-item:last-child {
+    border-bottom: none;
+}
+
+.trigger-item .trigger-type {
+    font-weight: 600;
+}
+
+.trigger-type.dip1 { color: var(--warning); }
+.trigger-type.dip2 { color: var(--danger); }
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 20px 0;
+    color: var(--text-light);
+    font-size: 0.75rem;
+}
+
+/* RWD 細節 */
+@media (max-width: 360px) {
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
+    .period-buttons {
+        flex-wrap: wrap;
+    }
+}
