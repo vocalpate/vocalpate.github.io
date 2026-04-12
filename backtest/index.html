@@ -172,7 +172,35 @@
             </div>
         </section>
 
-        <!-- 圖表 -->
+        <!-- 技術線圖 -->
+        <section class="card" id="techSection" style="display:none">
+            <h2>技術線圖
+                <span class="restored-badge" id="restoredBadge">還原股價</span>
+            </h2>
+            <div class="chart-controls">
+                <div class="ctrl-row">
+                    <span class="ctrl-label">均線</span>
+                    <button class="ma-btn active" data-period="5">MA5</button>
+                    <button class="ma-btn active" data-period="20">MA20</button>
+                    <button class="ma-btn active" data-period="60">MA60</button>
+                    <button class="ma-btn" data-period="120">MA120</button>
+                    <button class="ma-btn" data-period="240">MA240</button>
+                </div>
+                <div class="ctrl-row">
+                    <span class="ctrl-label">股價</span>
+                    <button class="price-btn active" data-type="adj">還原</button>
+                    <button class="price-btn" data-type="raw">原始</button>
+                </div>
+            </div>
+            <div class="chart-container" style="height:220px">
+                <canvas id="priceChart"></canvas>
+            </div>
+            <div class="chart-container" style="height:70px;margin-top:6px">
+                <canvas id="volumeChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 資產曲線 -->
         <section class="card chart-section" id="chartSection" style="display:none">
             <h2>資產曲線</h2>
             <div class="chart-container">

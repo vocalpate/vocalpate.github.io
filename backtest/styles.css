@@ -394,6 +394,70 @@ header h1 {
     height: 250px;
 }
 
+/* 技術線圖控制區 */
+.chart-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ctrl-label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    min-width: 28px;
+}
+
+.ma-btn, .price-btn {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ma-btn.active, .price-btn.active {
+    color: white;
+    border-color: transparent;
+}
+
+/* MA 各色 */
+.ma-btn[data-period="5"].active   { background: #ef4444; }
+.ma-btn[data-period="20"].active  { background: #f97316; }
+.ma-btn[data-period="60"].active  { background: #22c55e; }
+.ma-btn[data-period="120"].active { background: #3b82f6; }
+.ma-btn[data-period="240"].active { background: #a855f7; }
+
+.price-btn.active { background: var(--primary); }
+
+.ma-btn:hover:not(.active),
+.price-btn:hover:not(.active) {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* 還原股價標籤 */
+.restored-badge {
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #dcfce7;
+    color: #15803d;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
 /* 加碼紀錄 */
 .trigger-list {
     max-height: 200px;

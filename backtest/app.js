@@ -6,7 +6,20 @@
 // ===== 全域變數 =====
 let stockData = null;
 let assetChart = null;
+let priceChart = null;
+let volumeChart = null;
+let techData = null;       // 技術線圖用資料暫存
+let techTriggers = [];     // 加碼觸發點暫存
+let priceType = 'adj';     // 'adj'=還原 / 'raw'=原始
 let trancheCount = 2;
+
+// 已知逆分割紀錄（用於原始股價還原）
+const KNOWN_SPLITS = [
+    { date: '2026-03-23', ratio: 23.32 }  // 2026/3/23 富邦台50正2 逆分割 23.32:1
+];
+
+// MA 線顏色
+const MA_COLORS = { 5: '#ef4444', 20: '#f97316', 60: '#22c55e', 120: '#3b82f6', 240: '#a855f7' };
 
 // 各份加碼預設值
 const TRANCHE_DEFAULTS = [
@@ -127,6 +140,26 @@ function bindEvents() {
             document.querySelectorAll('.tranche-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderTranches(parseInt(btn.dataset.count));
+        });
+    });
+
+    // MA 均線按鈕
+    document.querySelectorAll('.ma-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.toggle('active');
+            redrawTechChart();
+        });
+    });
+
+    // 還原/原始股價切換
+    document.querySelectorAll('.price-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.price-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            priceType = btn.dataset.type;
+            document.getElementById('restoredBadge').textContent =
+                priceType === 'adj' ? '還原股價' : '原始股價（含逆分割）';
+            redrawTechChart();
         });
     });
 
@@ -447,6 +480,7 @@ function runBacktest() {
     displayResults(yourMetrics, lumpMetrics, dcaMetrics, yourResult, lumpResult, dcaResult, params);
     displayTriggerLog(yourResult.triggers);
     setTimeout(() => {
+        drawTechChart(data, yourResult.triggers);
         drawChart(yourResult.assetHistory, lumpResult.assetHistory, dcaResult.assetHistory, yourResult.triggers);
     }, 100);
 }
@@ -557,6 +591,176 @@ function displayTriggerLog(triggers) {
             <span>$${t.price.toFixed(1)} 買 ${formatMoney(t.amount)}</span>
         </div>
     `).join('');
+}
+
+// ===== 技術線圖 =====
+
+/** 計算移動平均（回傳與原陣列等長，不足 period 的位置為 null） */
+function calcMA(closes, period) {
+    return closes.map((_, i) => {
+        if (i < period - 1) return null;
+        return closes.slice(i - period + 1, i + 1).reduce((s, v) => s + v, 0) / period;
+    });
+}
+
+/** 依目前 priceType 取得顯示價格 */
+function getDisplayClose(date, adjClose) {
+    if (priceType === 'adj') return adjClose;
+    // 原始股價：逆分割前乘回比例
+    for (const sp of KNOWN_SPLITS) {
+        if (date < sp.date) return adjClose * sp.ratio;
+    }
+    return adjClose;
+}
+
+/** 取得目前勾選的 MA periods */
+function getActiveMAs() {
+    return [...document.querySelectorAll('.ma-btn.active')].map(b => parseInt(b.dataset.period));
+}
+
+/** 重繪技術線圖（MA 切換 / 股價模式切換時呼叫） */
+function redrawTechChart() {
+    if (techData) drawTechChart(techData, techTriggers);
+}
+
+/** 主要技術線圖繪製函式 */
+function drawTechChart(data, triggers = []) {
+    techData = data;
+    techTriggers = triggers;
+    document.getElementById('techSection').style.display = 'block';
+
+    const allCloses = data.map(d => getDisplayClose(d.date, d.close));
+
+    // 降採樣（提升效能）
+    const maxPts = 400;
+    const step = Math.max(1, Math.floor(data.length / maxPts));
+    const labels = [], closes = [], volumes = [];
+    for (let i = 0; i < data.length; i += step) {
+        labels.push(data[i].date);
+        closes.push(allCloses[i]);
+        volumes.push(data[i].volume || 0);
+    }
+
+    // MA 資料集
+    const maDatasets = getActiveMAs().map(period => {
+        const maAll = calcMA(allCloses, period);
+        const maSampled = [];
+        for (let i = 0; i < data.length; i += step) maSampled.push(maAll[i]);
+        return {
+            label: `MA${period}`,
+            data: maSampled,
+            borderColor: MA_COLORS[period],
+            borderWidth: 1.3,
+            pointRadius: 0,
+            fill: false,
+            spanGaps: true,
+        };
+    });
+
+    // 加碼觸發點（疊加在價格圖上）
+    const chineseNums = ['一', '二', '三', '四'];
+    const triggerColors = ['#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
+    const triggerDatasets = [0, 1, 2, 3].map(t => {
+        const pts = labels.map((lbl, i) => {
+            const tr = triggers.find(tr => tr.trancheIndex === t && tr.date === lbl);
+            return tr ? closes[i] : null;
+        });
+        const hasAny = pts.some(v => v !== null);
+        if (!hasAny) return null;
+        return {
+            label: `第${chineseNums[t]}份買入`,
+            data: pts,
+            borderColor: 'transparent',
+            backgroundColor: triggerColors[t],
+            pointRadius: pts.map(v => v !== null ? 7 : 0),
+            pointStyle: 'triangle',
+            pointBackgroundColor: triggerColors[t],
+            pointBorderColor: 'white',
+            pointBorderWidth: 1,
+            fill: false,
+            spanGaps: false,
+        };
+    }).filter(Boolean);
+
+    // 繪製價格圖
+    const priceCtx = document.getElementById('priceChart').getContext('2d');
+    if (priceChart) priceChart.destroy();
+
+    priceChart = new Chart(priceCtx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: '00631L',
+                    data: closes,
+                    borderColor: '#1e40af',
+                    borderWidth: 1.8,
+                    pointRadius: 0,
+                    fill: false,
+                },
+                ...maDatasets,
+                ...triggerDatasets,
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { boxWidth: 10, font: { size: 10 }, usePointStyle: true },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.raw == null) return null;
+                            return ctx.dataset.label + ': $' + ctx.raw.toFixed(2);
+                        }
+                    }
+                },
+            },
+            scales: {
+                x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+                y: {
+                    ticks: { font: { size: 10 }, callback: v => '$' + v.toFixed(1) },
+                },
+            },
+        },
+    });
+
+    // 繪製成交量圖
+    const volCtx = document.getElementById('volumeChart').getContext('2d');
+    if (volumeChart) volumeChart.destroy();
+
+    volumeChart = new Chart(volCtx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                data: volumes,
+                backgroundColor: 'rgba(100, 116, 139, 0.45)',
+                borderWidth: 0,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+                x: { display: false },
+                y: {
+                    ticks: {
+                        maxTicksLimit: 3,
+                        font: { size: 9 },
+                        callback: v => v >= 1e6 ? (v / 1e6).toFixed(0) + 'M'
+                            : v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v,
+                    },
+                },
+            },
+        },
+    });
 }
 
 // ===== 格式化工具 =====
