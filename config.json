@@ -191,6 +191,20 @@
         { "text": "Apps Script", "color": "purple" },
         { "text": "Canvas 簽名", "color": "blue" }
       ]
+    },
+    {
+      "name": "PDF OCR 轉文字",
+      "desc": "批次將掃描型或文字型 PDF 轉成可搜尋 PDF + .txt，自動偵測簡體並轉繁體，格式完整保留。",
+      "url": "#",
+      "icon": "📄",
+      "iconBg": "#FEF3C7",
+      "category": "AI 工具",
+      "status": "live",
+      "tags": [
+        { "text": "Python", "color": "amber" },
+        { "text": "EasyOCR", "color": "blue" },
+        { "text": "本機工具", "color": "gray" }
+      ]
     }
   ]
 }
