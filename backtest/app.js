@@ -367,8 +367,8 @@ function backtestDCA(data, params) {
                 cash += params.monthlyCash;
                 totalCapitalIn += params.monthlyCash;
             }
-            // 每月投入固定比例
-            const buyBudget = (i === 0 ? params.initialCapital : params.monthlyCash) * params.monthlyRatio;
+            // 純定期定額：每月固定投入 monthlyCash（不動用初始資金）
+            const buyBudget = params.monthlyCash * params.monthlyRatio;
             if (buyBudget > 0) {
                 const buy = calcBuy(buyBudget, day.close, params.feeDiscount);
                 if (buy.shares > 0 && cash >= buy.cost + buy.fee) {
