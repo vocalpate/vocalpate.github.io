@@ -88,7 +88,7 @@ def fetch_stock_data():
             vix_series.index = pd.to_datetime([d.date() for d in vix_series.index])
             # 對齊台股交易日（前向填充）
             stock_dates = pd.to_datetime([d.date() for d in df.index])
-            vix_aligned = vix_series.reindex(stock_dates, method='ffill').fillna(method='bfill')
+            vix_aligned = vix_series.reindex(stock_dates).ffill().bfill()
             df['vix'] = vix_aligned.values
             print(f"VIX 資料：{vix_series.iloc[0]:.1f} ~ {vix_series.iloc[-1]:.1f}（最新：{vix_series.iloc[-1]:.1f}）")
         else:
