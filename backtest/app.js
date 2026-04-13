@@ -461,16 +461,16 @@ function backtestDCA(data, params) {
         if (dayMonth !== currentMonth) {
             currentMonth = dayMonth;
             if (i > 0) {
+                // 從第二個月起：加入月薪並買入（第一個月不動初始資金）
                 cash += params.monthlyCash;
                 totalCapitalIn += params.monthlyCash;
-            }
-            // 純定期定額：每月固定投入 monthlyCash（不動用初始資金）
-            const buyBudget = params.monthlyCash * params.monthlyRatio;
-            if (buyBudget > 0) {
-                const buy = calcBuy(buyBudget, day.close, params.feeDiscount);
-                if (buy.shares > 0 && cash >= buy.cost + buy.fee) {
-                    holdings += buy.shares;
-                    cash -= (buy.cost + buy.fee);
+                const buyBudget = params.monthlyCash * params.monthlyRatio;
+                if (buyBudget > 0) {
+                    const buy = calcBuy(buyBudget, day.close, params.feeDiscount);
+                    if (buy.shares > 0 && cash >= buy.cost + buy.fee) {
+                        holdings += buy.shares;
+                        cash -= (buy.cost + buy.fee);
+                    }
                 }
             }
         }
