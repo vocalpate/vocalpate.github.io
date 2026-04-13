@@ -12,6 +12,7 @@ let techData = null;       // 技術線圖用資料暫存
 let techTriggers = [];     // 加碼觸發點暫存
 let priceType = 'adj';     // 'adj'=還原 / 'raw'=原始
 let trancheCount = 2;
+let triggerMode = 'price';  // 'price' | 'vix' | 'both'
 
 // 已知逆分割紀錄（用於原始股價還原）
 const KNOWN_SPLITS = [
@@ -21,12 +22,20 @@ const KNOWN_SPLITS = [
 // MA 線顏色
 const MA_COLORS = { 5: '#ef4444', 20: '#f97316', 60: '#22c55e', 120: '#3b82f6', 240: '#a855f7' };
 
-// 各份加碼預設值
+// 各份加碼預設值（跌幅模式）
 const TRANCHE_DEFAULTS = [
     { threshold: 10, ratio: 30 },
     { threshold: 20, ratio: 50 },
     { threshold: 30, ratio: 70 },
     { threshold: 40, ratio: 100 },
+];
+
+// 各份加碼預設值（VIX 模式）
+const TRANCHE_VIX_DEFAULTS = [
+    { vixLevel: 25, ratio: 30 },
+    { vixLevel: 35, ratio: 50 },
+    { vixLevel: 45, ratio: 70 },
+    { vixLevel: 55, ratio: 100 },
 ];
 
 // ===== 初始化 =====
@@ -60,23 +69,38 @@ function renderTranches(count) {
     const chineseNums = ['一', '二', '三', '四'];
     let html = '';
     for (let i = 0; i < count; i++) {
-        const def = TRANCHE_DEFAULTS[i];
+        const pd = TRANCHE_DEFAULTS[i];
+        const vd = TRANCHE_VIX_DEFAULTS[i];
+
+        const priceField = (triggerMode === 'price' || triggerMode === 'both') ? `
+                <div class="tranche-field">
+                    <span class="tranche-field-label">跌幅觸發</span>
+                    <div class="slider-row">
+                        <input type="range" id="dip${i}Threshold" min="1" max="60" value="${pd.threshold}">
+                        <span class="slider-value" id="dip${i}ThresholdVal">-${pd.threshold}%</span>
+                    </div>
+                </div>` : '';
+
+        const vixField = (triggerMode === 'vix' || triggerMode === 'both') ? `
+                <div class="tranche-field">
+                    <span class="tranche-field-label">VIX觸發</span>
+                    <div class="slider-row">
+                        <input type="range" id="dip${i}VixLevel" min="15" max="80" value="${vd.vixLevel}">
+                        <span class="slider-value" id="dip${i}VixLevelVal">≥${vd.vixLevel}</span>
+                    </div>
+                </div>` : '';
+
         html += `
         <div class="tranche-row">
             <span class="tranche-label">第${chineseNums[i]}份加碼</span>
             <div class="tranche-inputs">
-                <div class="tranche-field">
-                    <span class="tranche-field-label">跌幅觸發</span>
-                    <div class="slider-row">
-                        <input type="range" id="dip${i}Threshold" min="1" max="60" value="${def.threshold}">
-                        <span class="slider-value" id="dip${i}ThresholdVal">-${def.threshold}%</span>
-                    </div>
-                </div>
+                ${priceField}
+                ${vixField}
                 <div class="tranche-field">
                     <span class="tranche-field-label">動用現金</span>
                     <div class="slider-row">
-                        <input type="range" id="dip${i}Ratio" min="5" max="100" value="${def.ratio}">
-                        <span class="slider-value" id="dip${i}RatioVal">${def.ratio}%</span>
+                        <input type="range" id="dip${i}Ratio" min="5" max="100" value="${pd.ratio}">
+                        <span class="slider-value" id="dip${i}RatioVal">${pd.ratio}%</span>
                     </div>
                 </div>
             </div>
@@ -85,11 +109,18 @@ function renderTranches(count) {
     container.innerHTML = html;
 
     for (let i = 0; i < count; i++) {
-        const thEl = document.getElementById(`dip${i}Threshold`);
-        const thVal = document.getElementById(`dip${i}ThresholdVal`);
+        if (triggerMode === 'price' || triggerMode === 'both') {
+            const thEl = document.getElementById(`dip${i}Threshold`);
+            const thVal = document.getElementById(`dip${i}ThresholdVal`);
+            thEl.addEventListener('input', () => { thVal.textContent = `-${thEl.value}%`; });
+        }
+        if (triggerMode === 'vix' || triggerMode === 'both') {
+            const vixEl = document.getElementById(`dip${i}VixLevel`);
+            const vixVal = document.getElementById(`dip${i}VixLevelVal`);
+            vixEl.addEventListener('input', () => { vixVal.textContent = `≥${vixEl.value}`; });
+        }
         const raEl = document.getElementById(`dip${i}Ratio`);
         const raVal = document.getElementById(`dip${i}RatioVal`);
-        thEl.addEventListener('input', () => { thVal.textContent = `-${thEl.value}%`; });
         raEl.addEventListener('input', () => { raVal.textContent = `${raEl.value}%`; });
     }
 }
@@ -133,6 +164,16 @@ function bindEvents() {
     }
     endDateEl.addEventListener('change', onEndChange);
     endDateEl.addEventListener('input', onEndChange);
+
+    // 觸發模式按鈕
+    document.querySelectorAll('.trigger-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.trigger-mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            triggerMode = btn.dataset.mode;
+            renderTranches(trancheCount);
+        });
+    });
 
     // 加碼份數按鈕
     document.querySelectorAll('.tranche-btn').forEach(btn => {
@@ -194,13 +235,21 @@ function updatePeriodHint() {
 function getParams() {
     const tranches = [];
     for (let i = 0; i < trancheCount; i++) {
-        tranches.push({
-            threshold: parseInt(document.getElementById(`dip${i}Threshold`).value) / 100,
+        const t = {
             ratio: parseInt(document.getElementById(`dip${i}Ratio`).value) / 100,
             index: i,
-        });
+        };
+        if (triggerMode === 'price' || triggerMode === 'both') {
+            t.threshold = parseInt(document.getElementById(`dip${i}Threshold`).value) / 100;
+        }
+        if (triggerMode === 'vix' || triggerMode === 'both') {
+            t.vixLevel = parseInt(document.getElementById(`dip${i}VixLevel`).value);
+        }
+        tranches.push(t);
     }
-    tranches.sort((a, b) => a.threshold - b.threshold);
+    // 排序：跌幅由小到大；VIX 由低到高
+    if (triggerMode === 'vix') tranches.sort((a, b) => a.vixLevel - b.vixLevel);
+    else tranches.sort((a, b) => (a.threshold || 0) - (b.threshold || 0));
 
     return {
         initialCapital: parseFloat(document.getElementById('initialCapital').value) * 10000,
@@ -209,6 +258,7 @@ function getParams() {
         monthlyRatio: parseInt(document.getElementById('monthlyRatio').value) / 100,
         feeDiscount: parseInt(document.getElementById('feeDiscount').value) / 10,
         tranches,
+        triggerMode,
     };
 }
 
@@ -312,11 +362,24 @@ function backtestStrategy(data, params) {
             trancheTriggered.fill(false);
         }
 
-        // 跌幅檢查 & 逢低加碼
+        // 跌幅檢查 & 逢低加碼（支援 price / vix / both 三種觸發模式）
         const drawdown = (day.close - recentHigh) / recentHigh;
+        const vix = (day.vix !== undefined && day.vix !== null) ? day.vix : null;
+
         for (let t = 0; t < params.tranches.length; t++) {
             const tranche = params.tranches[t];
-            if (drawdown <= -tranche.threshold && !trancheTriggered[t]) {
+            if (trancheTriggered[t]) continue;
+
+            let triggered = false;
+            if (params.triggerMode === 'price') {
+                triggered = drawdown <= -tranche.threshold;
+            } else if (params.triggerMode === 'vix') {
+                triggered = vix !== null && vix >= tranche.vixLevel;
+            } else { // 'both'：跌幅 AND VIX 同時滿足
+                triggered = drawdown <= -tranche.threshold && vix !== null && vix >= tranche.vixLevel;
+            }
+
+            if (triggered) {
                 const buyBudget = cash * tranche.ratio;
                 if (buyBudget > 0) {
                     const buy = calcBuy(buyBudget, day.close, params.feeDiscount);
@@ -330,6 +393,7 @@ function backtestStrategy(data, params) {
                             price: day.close,
                             amount: buy.cost,
                             drawdown: (drawdown * 100).toFixed(1),
+                            vix: vix !== null ? parseFloat(vix.toFixed(1)) : null,
                         });
                     }
                 }
@@ -490,6 +554,15 @@ function runBacktest() {
 
     const params = getParams();
 
+    // VIX 資料可用性檢查
+    if (params.triggerMode === 'vix' || params.triggerMode === 'both') {
+        const hasVix = data.some(d => d.vix !== undefined && d.vix !== null);
+        if (!hasVix) {
+            alert('目前資料不含 VIX，請先執行 update_data.py 更新資料，再使用 VIX 觸發模式。');
+            return;
+        }
+    }
+
     const yourResult = backtestStrategy(data, params);
     const lumpResult = backtestLumpSum(data, params);
     const dcaResult = backtestDCA(data, params);
@@ -603,15 +676,19 @@ function displayTriggerLog(triggers) {
 
     const chineseNums = ['一', '二', '三', '四'];
     section.style.display = 'block';
-    list.innerHTML = triggers.map(t => `
+    list.innerHTML = triggers.map(t => {
+        let triggerLabel = `${t.drawdown}%`;
+        if (triggerMode === 'vix' && t.vix !== null) triggerLabel = `VIX ${t.vix}`;
+        else if (triggerMode === 'both' && t.vix !== null) triggerLabel = `${t.drawdown}% / VIX ${t.vix}`;
+        return `
         <div class="trigger-item">
             <span class="trigger-type dip${t.trancheIndex}">
-                第${chineseNums[t.trancheIndex] || (t.trancheIndex + 1)}份 ${t.drawdown}%
+                第${chineseNums[t.trancheIndex] || (t.trancheIndex + 1)}份 ${triggerLabel}
             </span>
             <span>${t.date}</span>
             <span>$${t.price.toFixed(1)} 買 ${formatMoney(t.amount)}</span>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 // ===== 技術線圖 =====
