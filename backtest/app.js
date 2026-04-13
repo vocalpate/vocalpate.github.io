@@ -467,6 +467,27 @@ function runBacktest() {
         return;
     }
 
+    // 顯示實際回測期間 & 不足提醒
+    const actualStart = data[0].date;
+    const actualEnd = data[data.length - 1].date;
+    const actualDays = Math.round((new Date(actualEnd) - new Date(actualStart)) / 86400000);
+    const actualMonths = Math.round(actualDays / 30.44);
+    const actualYears = (actualDays / 365.25).toFixed(1);
+
+    const activeBtn = document.querySelector('.period-btn.active');
+    const requestedYears = parseInt(activeBtn?.dataset.years || '0');
+    const expectedDays = requestedYears > 0 ? requestedYears * 365 : 0;
+    const isShort = expectedDays > 0 && actualDays < expectedDays * 0.9; // 不足9成算短缺
+
+    const infoEl = document.getElementById('backtestPeriodInfo');
+    if (isShort) {
+        infoEl.className = 'backtest-period-info warning';
+        infoEl.textContent = `⚠ 資料不足：預期 ${requestedYears} 年，實際僅涵蓋 ${actualYears} 年（${actualMonths} 個月）| ${actualStart} ~ ${actualEnd}`;
+    } else {
+        infoEl.className = 'backtest-period-info';
+        infoEl.textContent = `${actualStart} ~ ${actualEnd}（${actualDays} 個交易日，約 ${actualYears} 年）`;
+    }
+
     const params = getParams();
 
     const yourResult = backtestStrategy(data, params);

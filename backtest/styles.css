@@ -372,6 +372,21 @@ header h1 {
     font-size: 0.8rem;
 }
 
+/* 回測期間資訊提示 */
+.backtest-period-info {
+    font-size: 0.8rem;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.backtest-period-info.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
 .trigger-stats {
     font-size: 0.85rem;
     padding-top: 8px;
