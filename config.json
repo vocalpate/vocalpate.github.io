@@ -193,6 +193,20 @@
       ]
     },
     {
+      "name": "衡和中醫診所網站",
+      "desc": "日式極簡風診所形象網站，四大療程、後台全站可編輯（文字/圖片/配色/字級）、手機優先設計。",
+      "url": "#",
+      "icon": "🏮",
+      "iconBg": "#FFF7ED",
+      "category": "診所開業",
+      "status": "dev",
+      "tags": [
+        { "text": "純 HTML", "color": "amber" },
+        { "text": "後台管理", "color": "blue" },
+        { "text": "手機優先", "color": "green" }
+      ]
+    },
+    {
       "name": "PDF OCR 轉文字",
       "desc": "批次將掃描型或文字型 PDF 轉成可搜尋 PDF + .txt，自動偵測簡體並轉繁體，格式完整保留。",
       "url": "#",
