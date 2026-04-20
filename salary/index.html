@@ -51,9 +51,6 @@
     .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
     .summary-row.total { font-size: 18px; font-weight: 700; color: #1a3a5c; border-top: 2px solid #1a3a5c; margin-top: 8px; padding-top: 12px; }
 
-    .self-pay-item { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-    .self-pay-item select, .self-pay-item input { width: auto; flex: 1; min-width: 80px; }
-
     .date-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .date-tag { padding: 4px 10px; border-radius: 15px; font-size: 13px; cursor: pointer; border: 1px solid #ddd; background: #f8f8f8; transition: all .2s; }
     .date-tag.selected { background: #1a3a5c; color: #fff; border-color: #1a3a5c; }
@@ -123,21 +120,15 @@
   <div id="dailySection" style="display:none;">
     <div class="card">
       <h3>3. 每日明細</h3>
-      <p style="font-size:13px; color:#666; margin-bottom:12px;">系統已自動統計每日人數，請確認並填寫一戶多案數</p>
+      <p style="font-size:13px; color:#666; margin-bottom:12px;">系統已自動統計健保人數，請填寫自費人數與一戶多案（自費人數會併入總人數查薪資表）</p>
       <div class="table-wrap">
         <table id="dailyTable">
           <thead>
-            <tr><th>日期</th><th>星期</th><th>人數</th><th>查表薪資</th><th>實際薪資</th><th>一戶多案</th></tr>
+            <tr><th>日期</th><th>星期</th><th>健保</th><th>自費</th><th>合計</th><th>查表薪資</th><th>實際薪資</th><th>一戶多案</th></tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
-    </div>
-
-    <div class="card">
-      <h3>4. 自費項目</h3>
-      <div id="selfPayList"></div>
-      <button class="btn btn-outline btn-sm" onclick="addSelfPayRow()" style="margin-top:8px;">+ 新增自費項目</button>
     </div>
 
     <button class="btn btn-primary" onclick="doCalculate()" style="width:100%; padding:14px; font-size:16px; margin-top:8px;">
@@ -254,7 +245,6 @@ async function gasPost(action, data) {
 // ============================================================
 let currentSettings = null;
 let dailyData = [];
-let selfPayHistory = [];
 let lastResult = null;
 const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -290,7 +280,6 @@ function showToast(msg, isError) {
 window.onload = function() {
   loadDoctors();
   loadSettingsCache();
-  loadSelfPayHistory();
 };
 
 async function loadDoctors() {
@@ -317,15 +306,6 @@ async function loadSettingsCache() {
     }
   } catch (err) {
     showToast('載入設定失敗', true);
-  }
-}
-
-async function loadSelfPayHistory() {
-  try {
-    const list = await gasGet('getSelfPayHistory');
-    selfPayHistory = list || [];
-  } catch (err) {
-    console.error('載入自費歷史失敗', err);
   }
 }
 
@@ -452,7 +432,7 @@ function parseHISData(rows) {
     const dateObj = new Date(adYear, month - 1, day);
     const dow = dateObj.getDay();
 
-    return { date: d, day: day, dayOfWeek: dow, count: dateCount[d], multiHousehold: 0, selfPayItems: [] };
+    return { date: d, day: day, dayOfWeek: dow, count: dateCount[d], selfPayCount: 0, multiHousehold: 0 };
   });
 
   document.getElementById('importStatus').style.display = 'block';
@@ -477,7 +457,8 @@ function renderDailyTable() {
   const maxInTable = Math.max(...Object.keys(currentSettings.salaryTable).map(Number));
 
   tbody.innerHTML = dailyData.map((d, i) => {
-    const lookupCount = Math.min(d.count, maxInTable);
+    const totalCount = d.count + (d.selfPayCount || 0);
+    const lookupCount = Math.min(totalCount, maxInTable);
     const tableSalary = currentSettings.salaryTable[lookupCount] || 0;
     const isFixed = currentSettings.fixedDays.includes(d.dayOfWeek);
     const minSalary = isFixed ? currentSettings.fixedDayMinSalary : currentSettings.generalMinSalary;
@@ -488,87 +469,13 @@ function renderDailyTable() {
       '<td>' + d.day + '日</td>' +
       '<td>週' + dayNames[d.dayOfWeek] + (isFixed ? ' ⭐' : '') + '</td>' +
       '<td>' + d.count + '</td>' +
+      '<td><input type="number" min="0" value="' + (d.selfPayCount || 0) + '" style="width:50px;text-align:center;padding:4px;" onchange="dailyData[' + i + '].selfPayCount=parseInt(this.value)||0; renderDailyTable();"></td>' +
+      '<td style="font-weight:600;">' + totalCount + '</td>' +
       '<td>' + tableSalary.toLocaleString() + '</td>' +
       '<td' + highlight + '>' + actualSalary.toLocaleString() + '</td>' +
       '<td><input type="number" min="0" value="' + d.multiHousehold + '" style="width:50px;text-align:center;padding:4px;" onchange="dailyData[' + i + '].multiHousehold=parseInt(this.value)||0"></td>' +
       '</tr>';
   }).join('');
-}
-
-// ============================================================
-// 自費項目
-// ============================================================
-function addSelfPayRow() {
-  const list = document.getElementById('selfPayList');
-  const div = document.createElement('div');
-  div.className = 'self-pay-item';
-
-  let optionsHtml = '<option value="">-- 選擇 --</option>';
-  selfPayHistory.forEach(h => {
-    optionsHtml += '<option value="' + h.name + '" data-amount="' + h.amount + '">' + h.name + ' ($' + h.amount + ')</option>';
-  });
-  optionsHtml += '<option value="__new__">手動輸入...</option>';
-
-  div.innerHTML =
-    '<select onchange="onSelfPaySelect(this)" style="min-width:120px;">' + optionsHtml + '</select>' +
-    '<input type="text" class="sp-name" placeholder="姓名" style="display:none;min-width:80px;">' +
-    '<input type="number" class="sp-amount" placeholder="金額" style="min-width:70px;">' +
-    '<div class="date-tags" style="display:flex;flex-wrap:wrap;gap:4px;"></div>' +
-    '<button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex-shrink:0;">✕</button>';
-
-  list.appendChild(div);
-
-  const tagsDiv = div.querySelector('.date-tags');
-  dailyData.forEach((d, di) => {
-    const tag = document.createElement('span');
-    tag.className = 'date-tag';
-    tag.textContent = d.day + '日';
-    tag.setAttribute('data-di', di);
-    tag.onclick = function() { this.classList.toggle('selected'); };
-    tagsDiv.appendChild(tag);
-  });
-}
-
-function onSelfPaySelect(sel) {
-  const row = sel.closest('.self-pay-item');
-  const nameInput = row.querySelector('.sp-name');
-  const amountInput = row.querySelector('.sp-amount');
-  if (sel.value === '__new__') {
-    nameInput.style.display = 'block';
-    nameInput.value = '';
-    amountInput.value = '';
-  } else if (sel.value) {
-    nameInput.style.display = 'none';
-    const opt = sel.options[sel.selectedIndex];
-    amountInput.value = opt.getAttribute('data-amount') || '';
-  } else {
-    nameInput.style.display = 'none';
-  }
-}
-
-function collectSelfPayItems() {
-  dailyData.forEach(d => d.selfPayItems = []);
-
-  const rows = document.querySelectorAll('.self-pay-item');
-  rows.forEach(row => {
-    const sel = row.querySelector('select');
-    const nameInput = row.querySelector('.sp-name');
-    const amountInput = row.querySelector('.sp-amount');
-    const amount = parseInt(amountInput.value) || 0;
-    if (amount === 0) return;
-
-    let name = sel.value === '__new__' ? nameInput.value.trim() : sel.value;
-    if (!name) return;
-
-    // 背景儲存自費歷史
-    gasPost('saveSelfPayItem', { name, amount }).catch(() => {});
-
-    const tags = row.querySelectorAll('.date-tag.selected');
-    tags.forEach(tag => {
-      const di = parseInt(tag.getAttribute('data-di'));
-      dailyData[di].selfPayItems.push({ name, amount });
-    });
-  });
 }
 
 // ============================================================
@@ -583,8 +490,6 @@ function doCalculate() {
   if (!year || !month) { showToast('請填入年月'); return; }
   if (dailyData.length === 0) { showToast('請先匯入患者表'); return; }
 
-  collectSelfPayItems();
-
   const yearMonth = year + '/' + String(month).padStart(2, '0');
   const result = calculateLocal(doctor, yearMonth);
   lastResult = result;
@@ -597,29 +502,29 @@ function calculateLocal(doctor, yearMonth) {
   const s = currentSettings;
   const maxInTable = Math.max(...Object.keys(s.salaryTable).map(Number));
 
-  let totalSalary = 0, totalSelfPay = 0, totalPatients = 0, totalMultiHousehold = 0;
+  let totalSalary = 0, totalPatients = 0, totalSelfPayCount = 0, totalMultiHousehold = 0;
   const details = [];
 
   dailyData.forEach(d => {
-    const lookupCount = Math.min(d.count, maxInTable);
-    const tableSalary = d.count > maxInTable ? s.salaryTable[maxInTable] : (s.salaryTable[lookupCount] || 0);
+    const selfPayCount = d.selfPayCount || 0;
+    const totalCount = d.count + selfPayCount;
+    const lookupCount = Math.min(totalCount, maxInTable);
+    const tableSalary = totalCount > maxInTable ? s.salaryTable[maxInTable] : (s.salaryTable[lookupCount] || 0);
     const isFixed = s.fixedDays.includes(d.dayOfWeek);
     const minSalary = isFixed ? s.fixedDayMinSalary : s.generalMinSalary;
     const actualSalary = Math.max(tableSalary, minSalary);
-    let daySelfPay = 0;
-    (d.selfPayItems || []).forEach(item => daySelfPay += item.amount);
 
     totalSalary += actualSalary;
-    totalSelfPay += daySelfPay;
-    totalPatients += d.count;
+    totalPatients += totalCount;
+    totalSelfPayCount += selfPayCount;
     totalMultiHousehold += (d.multiHousehold || 0);
 
     details.push({
       date: d.date, day: d.day, dayOfWeek: d.dayOfWeek,
       dayOfWeekName: dayNames[d.dayOfWeek],
-      count: d.count, tableSalary, isFixedDay: isFixed,
-      minSalary, actualSalary, multiHousehold: d.multiHousehold || 0,
-      selfPay: daySelfPay, selfPayItems: d.selfPayItems || []
+      count: totalCount, insuredCount: d.count, selfPayCount,
+      tableSalary, isFixedDay: isFixed,
+      minSalary, actualSalary, multiHousehold: d.multiHousehold || 0
     });
   });
 
@@ -630,10 +535,10 @@ function calculateLocal(doctor, yearMonth) {
   return {
     doctor, yearMonth, details,
     summary: {
-      totalDays, totalPatients, totalMultiHousehold,
-      totalSalary, totalSelfPay,
+      totalDays, totalPatients, totalSelfPayCount, totalMultiHousehold,
+      totalSalary,
       totalTrips, carFarePerTrip: s.carFarePerTrip, totalCarFare,
-      grandTotal: totalSalary + totalSelfPay + totalCarFare
+      grandTotal: totalSalary + totalCarFare
     }
   };
 }
@@ -648,21 +553,22 @@ function renderResult(r) {
   let html = '<div class="card">' +
     '<h3>' + r.yearMonth + ' — ' + r.doctor + ' 醫師薪資</h3>' +
     '<div class="table-wrap"><table>' +
-    '<thead><tr><th>日期</th><th>星期</th><th>人數</th><th>薪資</th><th>多案</th><th>自費</th><th>備註</th></tr></thead><tbody>';
+    '<thead><tr><th>日期</th><th>星期</th><th>健保</th><th>自費</th><th>合計</th><th>薪資</th><th>多案</th><th>備註</th></tr></thead><tbody>';
 
   r.details.forEach(d => {
     const note = d.tableSalary < d.minSalary ? '保底' : '';
-    const selfPayText = d.selfPay > 0 ? d.selfPay.toLocaleString() : '';
-    const selfPayNames = (d.selfPayItems || []).map(i => i.name).join(', ');
+    const insured = d.insuredCount != null ? d.insuredCount : d.count;
+    const sp = d.selfPayCount || 0;
 
     html += '<tr>' +
       '<td>' + d.day + '日</td>' +
       '<td>週' + d.dayOfWeekName + (d.isFixedDay ? '⭐' : '') + '</td>' +
-      '<td>' + d.count + '</td>' +
+      '<td>' + insured + '</td>' +
+      '<td>' + (sp || '') + '</td>' +
+      '<td style="font-weight:600;">' + d.count + '</td>' +
       '<td>' + d.actualSalary.toLocaleString() + '</td>' +
       '<td>' + (d.multiHousehold || '') + '</td>' +
-      '<td>' + selfPayText + '</td>' +
-      '<td class="text-left" style="font-size:12px;">' + (note ? note + ' ' : '') + selfPayNames + '</td>' +
+      '<td class="text-left" style="font-size:12px;">' + note + '</td>' +
       '</tr>';
   });
 
@@ -670,10 +576,9 @@ function renderResult(r) {
 
   html += '<div class="summary-box">' +
     '<div class="summary-row"><span>出勤天數</span><span>' + s.totalDays + ' 天</span></div>' +
-    '<div class="summary-row"><span>總人數</span><span>' + s.totalPatients + ' 人</span></div>' +
+    '<div class="summary-row"><span>總人數（含自費 ' + (s.totalSelfPayCount || 0) + ' 人）</span><span>' + s.totalPatients + ' 人</span></div>' +
     '<div class="summary-row"><span>一戶多案扣除</span><span>-' + s.totalMultiHousehold + ' 趟</span></div>' +
     '<div class="summary-row"><span>看診薪資</span><span>$' + s.totalSalary.toLocaleString() + '</span></div>' +
-    '<div class="summary-row"><span>自費收入</span><span>$' + s.totalSelfPay.toLocaleString() + '</span></div>' +
     '<div class="summary-row"><span>車資（' + s.totalTrips + ' 趟 × $' + s.carFarePerTrip + '）</span><span>$' + s.totalCarFare.toLocaleString() + '</span></div>' +
     '<div class="summary-row total"><span>合計</span><span>$' + s.grandTotal.toLocaleString() + '</span></div>' +
     '</div>';
@@ -712,26 +617,27 @@ function exportExcel() {
   const wsData = [
     [r.yearMonth + ' ' + r.doctor + ' 醫師薪資明細'],
     [],
-    ['日期', '星期', '人數', '查表薪資', '實際薪資', '一戶多案', '自費', '備註']
+    ['日期', '星期', '健保', '自費', '合計', '查表薪資', '實際薪資', '一戶多案', '備註']
   ];
 
   r.details.forEach(d => {
     const note = d.isFixedDay && d.tableSalary < d.minSalary ? '固定出勤保底' :
                  !d.isFixedDay && d.tableSalary < d.minSalary ? '一般出勤保底' : '';
-    wsData.push([d.date, '週' + d.dayOfWeekName, d.count, d.tableSalary, d.actualSalary, d.multiHousehold || 0, d.selfPay || 0, note]);
+    const insured = d.insuredCount != null ? d.insuredCount : d.count;
+    wsData.push([d.date, '週' + d.dayOfWeekName, insured, d.selfPayCount || 0, d.count, d.tableSalary, d.actualSalary, d.multiHousehold || 0, note]);
   });
 
   wsData.push([]);
-  wsData.push(['', '', '', '', '出勤天數', s.totalDays]);
-  wsData.push(['', '', '', '', '總人數', s.totalPatients]);
-  wsData.push(['', '', '', '', '一戶多案扣除', s.totalMultiHousehold]);
-  wsData.push(['', '', '', '', '看診薪資', s.totalSalary]);
-  wsData.push(['', '', '', '', '自費收入', s.totalSelfPay]);
-  wsData.push(['', '', '', '', '車資', s.totalCarFare]);
-  wsData.push(['', '', '', '', '合計', s.grandTotal]);
+  wsData.push(['', '', '', '', '', '', '出勤天數', s.totalDays]);
+  wsData.push(['', '', '', '', '', '', '總人數', s.totalPatients]);
+  wsData.push(['', '', '', '', '', '', '自費人數', s.totalSelfPayCount || 0]);
+  wsData.push(['', '', '', '', '', '', '一戶多案扣除', s.totalMultiHousehold]);
+  wsData.push(['', '', '', '', '', '', '看診薪資', s.totalSalary]);
+  wsData.push(['', '', '', '', '', '', '車資', s.totalCarFare]);
+  wsData.push(['', '', '', '', '', '', '合計', s.grandTotal]);
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 6 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 16 }];
+  ws['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 6 }, { wch: 6 }, { wch: 6 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 16 }];
   XLSX.utils.book_append_sheet(wb, ws, '薪資明細');
 
   XLSX.writeFile(wb, r.yearMonth.replace('/', '') + '_' + r.doctor + '_薪資.xlsx');
@@ -752,11 +658,11 @@ async function loadHistory() {
       return;
     }
     let html = '<div class="table-wrap"><table>' +
-      '<thead><tr><th>年月</th><th>醫師</th><th>天數</th><th>人數</th><th>看診</th><th>自費</th><th>車資</th><th>合計</th></tr></thead><tbody>';
+      '<thead><tr><th>年月</th><th>醫師</th><th>天數</th><th>人數</th><th>看診</th><th>車資</th><th>合計</th></tr></thead><tbody>';
     records.forEach(r => {
       html += '<tr style="cursor:pointer;" onclick="viewHistoryDetail(\'' + r.yearMonth + '\',\'' + r.doctor + '\')">' +
         '<td>' + r.yearMonth + '</td><td>' + r.doctor + '</td><td>' + r.totalDays + '</td><td>' + r.totalPatients + '</td>' +
-        '<td>$' + (r.totalSalary || 0).toLocaleString() + '</td><td>$' + (r.totalSelfPay || 0).toLocaleString() + '</td>' +
+        '<td>$' + (r.totalSalary || 0).toLocaleString() + '</td>' +
         '<td>$' + (r.totalCarFare || 0).toLocaleString() + '</td><td style="font-weight:700;">$' + (r.grandTotal || 0).toLocaleString() + '</td></tr>';
     });
     html += '</tbody></table></div>';
