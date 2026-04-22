@@ -50,10 +50,24 @@
       ]
     },
     {
+      "name": "小針刀術後疼痛追蹤",
+      "desc": "LINE Bot 自動追蹤術後 D+1~D+4 疼痛分數，Google Sheet 記錄，異常自動標記。",
+      "url": "https://docs.google.com/spreadsheets/d/1AD8OXeWU9stcFEreUJ25TCSq4CrQp4DS9c2F9iaU-n0/edit",
+      "icon": "🪡",
+      "iconBg": "#FFF7ED",
+      "category": "診所開業",
+      "status": "live",
+      "tags": [
+        { "text": "LINE Bot", "color": "green" },
+        { "text": "Google Sheets", "color": "green" },
+        { "text": "疼痛追蹤", "color": "coral" }
+      ]
+    },
+    {
       "name": "小針刀服務",
       "desc": "小針刀（acupotomy）服務線相關工具與資料。",
       "url": "#",
-      "icon": "🪡",
+      "icon": "📋",
       "iconBg": "#FFF7ED",
       "category": "診所開業",
       "status": "plan",
