@@ -193,8 +193,16 @@
       <input type="number" id="settGeneralMin" value="2300">
     </div>
     <div class="form-group">
-      <label>車資單價（元/趟）</label>
-      <input type="number" id="settCarFare" value="220">
+      <label>搭車比例（%）</label>
+      <input type="number" id="settRideRatio" value="40" min="0" max="100">
+    </div>
+    <div class="form-group">
+      <label>搭車車資（元/趟）</label>
+      <input type="number" id="settRideFare" value="220">
+    </div>
+    <div class="form-group">
+      <label>自騎車資（元/趟）</label>
+      <input type="number" id="settBikeFare" value="150">
     </div>
     <button class="btn btn-primary" onclick="saveAllSettings()" style="width:100%;">儲存設定</button>
   </div>
@@ -302,7 +310,9 @@ async function loadSettingsCache() {
     if (s) {
       document.getElementById('settFixedMin').value = s.fixedDayMinSalary;
       document.getElementById('settGeneralMin').value = s.generalMinSalary;
-      document.getElementById('settCarFare').value = s.carFarePerTrip;
+      document.getElementById('settRideRatio').value = s.fareRideRatio != null ? s.fareRideRatio : 40;
+      document.getElementById('settRideFare').value = s.fareRidePerTrip || s.carFarePerTrip || 220;
+      document.getElementById('settBikeFare').value = s.fareBikePerTrip || 150;
     }
   } catch (err) {
     showToast('載入設定失敗', true);
@@ -530,14 +540,19 @@ function calculateLocal(doctor, yearMonth) {
 
   const totalDays = dailyData.length;
   const totalTrips = totalDays + totalPatients - totalMultiHousehold;
-  const totalCarFare = totalTrips * s.carFarePerTrip;
+  const rideRatio = (s.fareRideRatio != null ? s.fareRideRatio : 40) / 100;
+  const rideTrips = Math.round(totalTrips * rideRatio);
+  const bikeTrips = totalTrips - rideTrips;
+  const rideFare = s.fareRidePerTrip || s.carFarePerTrip || 220;
+  const bikeFare = s.fareBikePerTrip || 150;
+  const totalCarFare = rideTrips * rideFare + bikeTrips * bikeFare;
 
   return {
     doctor, yearMonth, details,
     summary: {
       totalDays, totalPatients, totalSelfPayCount, totalMultiHousehold,
       totalSalary,
-      totalTrips, carFarePerTrip: s.carFarePerTrip, totalCarFare,
+      totalTrips, rideTrips, bikeTrips, rideFare, bikeFare, totalCarFare,
       grandTotal: totalSalary + totalCarFare
     }
   };
@@ -579,7 +594,7 @@ function renderResult(r) {
     '<div class="summary-row"><span>總人數（含自費 ' + (s.totalSelfPayCount || 0) + ' 人）</span><span>' + s.totalPatients + ' 人</span></div>' +
     '<div class="summary-row"><span>一戶多案扣除</span><span>-' + s.totalMultiHousehold + ' 趟</span></div>' +
     '<div class="summary-row"><span>看診薪資</span><span>$' + s.totalSalary.toLocaleString() + '</span></div>' +
-    '<div class="summary-row"><span>車資（' + s.totalTrips + ' 趟 × $' + s.carFarePerTrip + '）</span><span>$' + s.totalCarFare.toLocaleString() + '</span></div>' +
+    '<div class="summary-row"><span>車資（搭車 ' + s.rideTrips + ' 趟×$' + s.rideFare + ' + 自騎 ' + s.bikeTrips + ' 趟×$' + s.bikeFare + '）</span><span>$' + s.totalCarFare.toLocaleString() + '</span></div>' +
     '<div class="summary-row total"><span>合計</span><span>$' + s.grandTotal.toLocaleString() + '</span></div>' +
     '</div>';
 
@@ -712,7 +727,9 @@ async function loadSettings() {
 
     document.getElementById('settFixedMin').value = s.fixedDayMinSalary;
     document.getElementById('settGeneralMin').value = s.generalMinSalary;
-    document.getElementById('settCarFare').value = s.carFarePerTrip;
+    document.getElementById('settRideRatio').value = s.fareRideRatio != null ? s.fareRideRatio : 40;
+    document.getElementById('settRideFare').value = s.fareRidePerTrip || s.carFarePerTrip || 220;
+    document.getElementById('settBikeFare').value = s.fareBikePerTrip || 150;
 
     const doctors = await gasGet('getDoctors');
     renderDoctorList(doctors);
@@ -753,7 +770,9 @@ async function saveAllSettings() {
     fixedDays,
     fixedDayMinSalary: parseInt(document.getElementById('settFixedMin').value) || 4000,
     generalMinSalary: parseInt(document.getElementById('settGeneralMin').value) || 2300,
-    carFarePerTrip: parseInt(document.getElementById('settCarFare').value) || 220
+    fareRideRatio: parseInt(document.getElementById('settRideRatio').value) || 40,
+    fareRidePerTrip: parseInt(document.getElementById('settRideFare').value) || 220,
+    fareBikePerTrip: parseInt(document.getElementById('settBikeFare').value) || 150
   };
 
   try {
