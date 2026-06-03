@@ -96,7 +96,14 @@
       <label>醫師</label>
       <div style="display:flex; gap:8px;">
         <select id="doctorSelect" style="flex:1;"><option value="">載入中...</option></select>
-        <button class="btn btn-outline btn-sm" onclick="promptAddDoctor()">+</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleDoctorManager()">⚙ 管理</button>
+      </div>
+      <div id="doctorManager" style="display:none; margin-top:8px; padding:10px; background:#f7f7f7; border-radius:6px;">
+        <div id="doctorListCalc"></div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <input type="text" id="newDoctorNameCalc" placeholder="輸入醫師姓名" style="flex:1;">
+          <button class="btn btn-primary btn-sm" onclick="doAddDoctor('calc')">新增</button>
+        </div>
       </div>
     </div>
     <div class="form-group">
@@ -212,7 +219,7 @@
     <div id="doctorList"></div>
     <div style="display:flex; gap:8px; margin-top:8px;">
       <input type="text" id="newDoctorName" placeholder="輸入醫師姓名" style="flex:1;">
-      <button class="btn btn-primary btn-sm" onclick="doAddDoctor()">新增</button>
+      <button class="btn btn-primary btn-sm" onclick="doAddDoctor('settings')">新增</button>
     </div>
   </div>
 </div>
@@ -322,27 +329,29 @@ async function loadSettingsCache() {
 // ============================================================
 // 醫師管理
 // ============================================================
-async function promptAddDoctor() {
-  const name = prompt('請輸入醫師姓名：');
-  if (name && name.trim()) {
+async function toggleDoctorManager() {
+  const panel = document.getElementById('doctorManager');
+  const showing = panel.style.display !== 'none';
+  panel.style.display = showing ? 'none' : 'block';
+  if (!showing) {
     try {
-      await gasPost('addDoctor', { name: name.trim() });
-      await loadDoctors();
-      showToast('已新增醫師：' + name.trim());
+      const list = await gasGet('getDoctors');
+      renderAllDoctorLists(list);
     } catch (err) {
-      showToast('新增失敗', true);
+      showToast('載入醫師清單失敗', true);
     }
   }
 }
 
-async function doAddDoctor() {
-  const input = document.getElementById('newDoctorName');
+async function doAddDoctor(source) {
+  const inputId = source === 'calc' ? 'newDoctorNameCalc' : 'newDoctorName';
+  const input = document.getElementById(inputId);
   const name = input.value.trim();
   if (!name) return;
   try {
     const list = await gasPost('addDoctor', { name });
     await loadDoctors();
-    renderDoctorList(list);
+    renderAllDoctorLists(list);
     input.value = '';
     showToast('已新增醫師：' + name);
   } catch (err) {
@@ -350,8 +359,14 @@ async function doAddDoctor() {
   }
 }
 
-function renderDoctorList(list) {
-  const el = document.getElementById('doctorList');
+// 同時把醫師清單畫到「設定頁」與「計算頁管理面板」兩邊（哪邊不存在會跳過）
+function renderAllDoctorLists(list) {
+  ['doctorList', 'doctorListCalc'].forEach(id => renderDoctorList(list, id));
+}
+
+function renderDoctorList(list, containerId) {
+  const el = document.getElementById(containerId || 'doctorList');
+  if (!el) return;
   if (!list || list.length === 0) { el.innerHTML = '<p style="color:#999;">尚無醫師</p>'; return; }
   el.innerHTML = list.map(n =>
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">' +
@@ -366,7 +381,7 @@ async function doDeleteDoctor(name) {
   try {
     const list = await gasPost('deleteDoctor', { name });
     await loadDoctors();
-    renderDoctorList(list);
+    renderAllDoctorLists(list);
     showToast('已刪除');
   } catch (err) {
     showToast('刪除失敗', true);
@@ -491,7 +506,7 @@ function renderDailyTable() {
 // ============================================================
 // 計算薪資
 // ============================================================
-function doCalculate() {
+async function doCalculate() {
   const doctor = document.getElementById('doctorSelect').value;
   const year = document.getElementById('inputYear').value;
   const month = document.getElementById('inputMonth').value;
@@ -505,7 +520,14 @@ function doCalculate() {
   lastResult = result;
   renderResult(result);
   switchTab('result');
-  showToast('計算完成');
+
+  // 算完自動上傳 Google Sheet，跨電腦才看得到
+  try {
+    await gasPost('saveSalaryRecord', { data: lastResult });
+    showToast('計算完成並已自動儲存');
+  } catch (err) {
+    showToast('計算完成，但自動儲存失敗：' + err.message + '（可按「重新儲存」手動補存）', true);
+  }
 }
 
 function calculateLocal(doctor, yearMonth) {
@@ -599,7 +621,7 @@ function renderResult(r) {
     '</div>';
 
   html += '<div class="no-print" style="display:flex; gap:8px; flex-wrap:wrap;">' +
-    '<button class="btn btn-success" onclick="doSaveRecord()" style="flex:1;">儲存紀錄</button>' +
+    '<button class="btn btn-success" onclick="doSaveRecord()" style="flex:1;">重新儲存</button>' +
     '<button class="btn btn-primary" onclick="window.print()" style="flex:1;">列印</button>' +
     '<button class="btn btn-outline" onclick="exportExcel()" style="flex:1;">匯出 Excel</button>' +
     '</div>';
@@ -732,7 +754,7 @@ async function loadSettings() {
     document.getElementById('settBikeFare').value = s.fareBikePerTrip || 150;
 
     const doctors = await gasGet('getDoctors');
-    renderDoctorList(doctors);
+    renderAllDoctorLists(doctors);
   } catch (err) {
     showToast('載入設定失敗', true);
   }
