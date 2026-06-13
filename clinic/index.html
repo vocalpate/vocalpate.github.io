@@ -671,8 +671,32 @@ body::after{
 }
 
 /* ═══════════════ DOCTOR 區 ═══════════════ */
+/* ═══════════════ 看診流程 PROCESS（日濟安風：4 圓圈 + 金虛線） ═══════════════ */
+.process-wrap{max-width:var(--content-max);margin:0 auto}
+.process-wrap .sec-head{margin-bottom:68px}
+.process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
+.process-grid::before{content:'';position:absolute;top:31px;left:10%;right:10%;height:1px;background:repeating-linear-gradient(to right,var(--gold) 0,var(--gold) 6px,transparent 6px,transparent 12px);opacity:.55;z-index:0}
+.process-step{padding:0 24px 0 0;position:relative;z-index:1;text-align:left}
+.ps-circle{width:62px;height:62px;border-radius:50%;border:1px solid rgba(229,173,73,.4);background:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--cormorant);font-style:italic;font-size:1.45rem;font-weight:300;color:var(--gold);margin-bottom:26px;box-shadow:6px 6px 14px rgba(0,0,0,.06),-6px -6px 14px rgba(255,255,255,.85);transition:background .35s,color .35s,box-shadow .35s,border-color .35s}
+.process-step:hover .ps-circle{background:var(--gold);color:#fff;border-color:transparent;box-shadow:inset 4px 4px 10px rgba(180,100,10,.25),inset -4px -4px 10px rgba(255,200,110,.3)}
+.ps-h{font-family:var(--mincho);font-weight:500;font-size:1rem;color:var(--sumi);margin-bottom:10px;line-height:1.55;letter-spacing:.04em}
+.ps-p{font-size:13.5px;line-height:1.85;font-weight:300;color:var(--ash);max-width:240px}
+@media(max-width:820px){
+  .process-grid{grid-template-columns:1fr 1fr;gap:44px 32px}
+  .process-grid::before{display:none}
+}
+@media(max-width:480px){
+  .process-grid{grid-template-columns:1fr;gap:40px}
+  .process-step{text-align:center;padding:0}
+  .ps-circle{margin-left:auto;margin-right:auto}
+  .ps-p{max-width:100%}
+}
+
 .doctor-wrap{max-width:1160px;margin:0 auto;display:grid;grid-template-columns:.9fr 1.1fr;gap:80px;align-items:center}
-.doctor-img{aspect-ratio:3/4;border-radius:var(--arch-all);background:linear-gradient(160deg,var(--cream-2),var(--cream-dark));overflow:hidden;position:relative;box-shadow:0 30px 80px -30px rgba(31,31,29,.2)}
+.doctor-photo-wrap{position:relative}
+.doctor-photo-wrap::before{content:'';position:absolute;top:-14px;left:-14px;right:14px;bottom:14px;border:1px solid rgba(229,173,73,.42);z-index:0;pointer-events:none}
+.doctor-img{position:relative;z-index:1;aspect-ratio:3/4;border-radius:var(--arch-all);background:linear-gradient(160deg,var(--cream-2),var(--cream-dark));overflow:hidden;box-shadow:0 30px 80px -30px rgba(31,31,29,.2)}
+.doctor-img::before{content:'';position:absolute;inset:0;border:1px solid var(--gold-a);pointer-events:none;z-index:3;border-radius:inherit}
 .doctor-img img{width:100%;height:100%;object-fit:cover}
 .doctor-img-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mincho);font-size:180px;color:var(--sumi);opacity:.15}
 .doctor-meta{position:absolute;bottom:28px;left:28px;right:28px;color:var(--cream);text-shadow:0 2px 8px rgba(0,0,0,.5)}
@@ -683,8 +707,9 @@ body::after{
 
 .doctor-content .sec-tag{justify-content:flex-start;margin-bottom:28px}
 .doctor-content .sec-tag::before{display:none}
-.doctor-content .sec-title{text-align:left;margin-bottom:30px}
+.doctor-content .sec-title{text-align:left;margin-bottom:20px;margin-left:0;margin-right:0}
 .doctor-content p{color:var(--sumi-soft);line-height:2;margin-bottom:18px;font-size:15px}
+.doctor-quote{font-family:var(--cormorant)!important;font-style:italic;font-size:16px!important;line-height:1.65!important;color:var(--forest)!important;margin:0 0 28px 0!important;padding-left:14px;border-left:2px solid var(--gold);max-width:520px}
 .doctor-sig{font-family:var(--mincho);font-size:17px;margin-top:32px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
 .doctor-sig-name{letter-spacing:.1em}
 .doctor-sig-en{font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--ash)}
@@ -696,7 +721,8 @@ body::after{
 
 @media(max-width:1000px){
   .doctor-wrap{grid-template-columns:1fr;gap:60px}
-  .doctor-img{max-width:420px;margin:0 auto}
+  .doctor-photo-wrap{max-width:420px;margin:0 auto}
+  .doctor-img{max-width:100%}
 }
 
 /* ═══════════════ BLOG ═══════════════ */
@@ -752,10 +778,24 @@ body::after{
 .booking-info>p{color:var(--ash);margin:24px 0 36px;font-size:14.5px;line-height:2}
 .booking-hours{padding-top:32px;border-top:1px solid var(--line);overflow-x:auto}
 .timetable{width:100%;border-collapse:collapse;font-size:var(--timetable-fs, 13.5px);text-align:center;table-layout:fixed}
-.timetable th, .timetable td{border:1px solid var(--line);padding:12px 6px;font-family:var(--mincho);word-break:keep-all;overflow:hidden}
-.timetable th{background:var(--cream-2);color:var(--ash);font-weight:500;white-space:nowrap}
+.timetable th, .timetable td{border:1px solid var(--line);padding:12px 6px;font-family:var(--mincho);word-break:keep-all;overflow:hidden;transition:background .2s}
+.timetable th{background:var(--forest2);color:rgba(255,255,255,.85);font-weight:500;white-space:nowrap;letter-spacing:.06em}
+.timetable thead th:first-child{background:var(--forest);color:rgba(255,255,255,.55);font-family:var(--cormorant);font-style:italic;font-size:.85em;letter-spacing:.1em}
 .timetable td{color:var(--sumi)}
-.timetable td.off{color:var(--ash-light)}
+.timetable td.off{color:var(--ash-light);background:#fff}
+/* 色彩編碼：自費=金、健保=鼠尾草綠 */
+.timetable td.td-self{background:rgba(229,173,73,.22);color:#7A5A18;font-weight:500}
+.timetable td.td-nhi{background:rgba(131,157,116,.14);color:var(--forest);font-weight:500}
+.timetable tbody tr:hover td.td-self{background:rgba(229,173,73,.38)}
+.timetable tbody tr:hover td.td-nhi{background:rgba(131,157,116,.24)}
+.timetable tbody tr:hover th{background:var(--forest);color:#fff}
+/* 圖例 */
+.timetable-legend{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin:0 0 18px;font-size:12.5px;color:var(--ash);font-weight:300}
+.tl-item{display:flex;align-items:center;gap:8px}
+.tl-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.tl-dot.dot-self{background:rgba(229,173,73,.55);border:1px solid rgba(229,173,73,.7)}
+.tl-dot.dot-nhi{background:rgba(131,157,116,.45);border:1px solid rgba(131,157,116,.6)}
+.tl-dot.dot-off{background:#fff;border:1px solid var(--line-ink)}
 /* 右側時段列表起點對齊到左側「門診時間」大標下方（低於 sec-tag + sec-title 兩列） */
 .booking-side{padding:118px 0 0;display:flex;flex-direction:column}
 .hours-list{list-style:none;padding:0;margin:0 0 28px}
@@ -1115,19 +1155,55 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
   </div>
 </section>
 
+<!-- ═══════════════ PROCESS 看診流程 ═══════════════ -->
+<section class="section" id="process" data-key="process" data-label="看診流程 Process" aria-labelledby="process-heading">
+  <div class="process-wrap">
+    <div class="sec-head reveal" style="text-align:center">
+      <div class="sec-tag sec-tag-center"><span class="jp">診療フロー</span>／ process</div>
+      <h2 class="sec-title" id="process-heading">不用急著決定，<br>先讓醫師<em>好好了解你</em>。</h2>
+      <p class="sec-sub">每一次門診都從理解開始。下方四個步驟，是您從第一次接觸到長期照護的完整流程。</p>
+    </div>
+    <div class="process-grid reveal">
+      <div class="process-step">
+        <div class="ps-circle">01</div>
+        <h3 class="ps-h">確認需求與主訴</h3>
+        <p class="ps-p">先聆聽您想處理的不適、症狀或療程目標，必要時請您填寫初診資料卡。</p>
+      </div>
+      <div class="process-step">
+        <div class="ps-circle">02</div>
+        <h3 class="ps-h">依需求進行評估</h3>
+        <p class="ps-p">中醫四診合參（望聞問切）加上現代臨床評估，找出真正的根源，而不只是抑制症狀。</p>
+      </div>
+      <div class="process-step">
+        <div class="ps-circle">03</div>
+        <h3 class="ps-h">安排合適療程</h3>
+        <p class="ps-p">為您量身規劃單次治療或療程方案，並明確說明療程節奏、預期效果與費用。</p>
+      </div>
+      <div class="process-step">
+        <div class="ps-circle">04</div>
+        <h3 class="ps-h">固定回診追蹤</h3>
+        <p class="ps-p">依個別狀況調整節奏，每次回診都會微調用藥與療程，讓改善能長久維持。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════════════ DOCTOR ═══════════════ -->
 <section class="section" id="doctor" data-key="doctor" data-label="院長介紹" aria-labelledby="doctor-heading">
   <div class="doctor-wrap">
-    <div class="doctor-img reveal" id="doctor-img">
-      <div class="doctor-img-fallback">邱</div>
-      <div class="doctor-meta">
-        <div class="doctor-name-img" id="d-name-img">邱子瑜 醫師</div>
-        <div class="doctor-title-img" id="d-title-img">Director & Founder</div>
+    <div class="doctor-photo-wrap reveal">
+      <div class="doctor-img" id="doctor-img">
+        <div class="doctor-img-fallback">邱</div>
+        <div class="doctor-meta">
+          <div class="doctor-name-img" id="d-name-img">邱子瑜 醫師</div>
+          <div class="doctor-title-img" id="d-title-img">Director & Founder</div>
+        </div>
       </div>
     </div>
     <div class="doctor-content reveal">
       <div class="sec-tag"><span class="jp">院長介紹</span>／ doctor</div>
       <h2 class="sec-title" id="doctor-heading">在傳統與現代之間，<br>尋求一種<em>平衡之道</em></h2>
+      <p class="doctor-quote" id="d-quote">— Healing begins with understanding,<br>and unfolds with patience.</p>
       <p id="d-p1">邱子瑜中醫師創立於 2015 年，我們相信真正的治療不僅在於症狀的緩解，更在於身體、情緒與生活的整體協調。</p>
       <p id="d-p2">診所以「精準」為核心理念，由邱子瑜醫師領軍，結合多位專科中醫師團隊，引入針刀、美顏針灸、體質醫學與現代臨床評估工具，為每位患者量身打造個人化療程計畫。</p>
       <p id="d-p3">醫師每一次出針，皆以解剖學知識為基底、以患者感受為依歸——不追求立竿見影的短效，而在乎身體整體的穩定復原。</p>
@@ -1322,7 +1398,8 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
       </div>
       <div class="admin-sec">
         <h3>門診時間表</h3>
-        <p class="af-hint" style="margin-bottom:12px">填寫醫師名稱或「休診」。橫排代表星期一到星期日。</p>
+        <p class="af-hint" style="margin-bottom:12px">填寫醫師名稱或「休診」。橫排代表星期一到星期日。<br>
+          <b>色彩編碼</b>：格子文字加上「自費」會變<span style="background:rgba(229,173,73,.25);color:#7A5A18;padding:1px 6px;border-radius:3px">金底</span>、加上「健保」會變<span style="background:rgba(131,157,116,.18);color:var(--forest);padding:1px 6px;border-radius:3px">綠底</span>。例：填「邱（自費）」或「邱（健保）」。「自費／健保」字串會自動隱藏不顯示。</p>
         <div id="timetable-editor" style="display:flex;flex-direction:column;gap:8px;overflow-x:auto;"></div>
       </div>
       <div class="admin-sec"><h3>醫師 & 數據</h3>
@@ -2439,16 +2516,28 @@ function renderHours(){
   const displayName = (state.appearance && state.appearance.timetableName !== undefined)
     ? state.appearance.timetableName
     : '邱子瑜';
-  let html = '<table class="timetable"><thead><tr><th>時段</th>';
+  // 圖例
+  let html = '<div class="timetable-legend">'
+    + '<div class="tl-item"><span class="tl-dot dot-self"></span>自費療程</div>'
+    + '<div class="tl-item"><span class="tl-dot dot-nhi"></span>健保門診</div>'
+    + '<div class="tl-item"><span class="tl-dot dot-off"></span>休診</div>'
+    + '</div>';
+  html += '<table class="timetable"><thead><tr><th>時段</th>';
   for(let d=0; d<7; d++) html += '<th>星期' + days[d] + '</th>';
   html += '</tr></thead><tbody>';
   for(let s=0; s<3; s++){
     html += '<tr><th>' + shifts[s] + '</th>';
     for(let d=0; d<7; d++){
-      let txt = t[s][d] || '';
-      if(txt.includes('休診')) html += '<td class="off">' + txt + '</td>';
-      else if(txt.trim()) html += '<td>' + (displayName || txt) + '</td>';
-      else html += '<td></td>';
+      let txt = (t[s][d] || '').trim();
+      if(!txt){ html += '<td></td>'; continue; }
+      if(txt.includes('休')){ html += '<td class="off">' + txt + '</td>'; continue; }
+      // 文字含「自費」→ 金；含「健保」→ 綠；都沒有 → 預設
+      let cls = '';
+      let cleanTxt = txt;
+      if(txt.includes('自費')){ cls = 'td-self'; cleanTxt = txt.replace(/[（\(]?自費[）\)]?/g,'').trim(); }
+      else if(txt.includes('健保')){ cls = 'td-nhi'; cleanTxt = txt.replace(/[（\(]?健保[）\)]?/g,'').trim(); }
+      const finalTxt = (displayName || cleanTxt || txt);
+      html += '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + finalTxt + '</td>';
     }
     html += '</tr>';
   }
@@ -3067,7 +3156,7 @@ function renderContactEditor(){
 
 // ═══ 版面（區塊顯示／順序） ═══
 const LAYOUT_KEY = 'henghe_layout_v2';
-const DEFAULT_ORDER = ['hero','ticker','painpoints','services','booking','promise','doctor','blog','testimonials','faq','contact'];
+const DEFAULT_ORDER = ['hero','ticker','painpoints','services','booking','promise','process','doctor','blog','testimonials','faq','contact'];
 
 function loadLayout(){
   try{
