@@ -178,9 +178,15 @@
 <style>
 :root{
   /* 主題色（後台可動態切換） */
-  --theme-primary: #D47A2A;        /* 預設暖橘 */
-  --theme-primary-light: #E59450;
-  --theme-primary-soft: #B8662A;
+  --theme-primary: #E5AD49;        /* 預設森林金（日濟安風） */
+  --theme-primary-light: #EBB84E;
+  --theme-primary-soft: #C68E2A;
+  /* 森林風固定色（日濟安主結構：深綠 hero、footer、sage 輔色） */
+  --forest:  #425149;
+  --forest2: #2A3830;
+  --gold:    #E5AD49;
+  --sage:    #839D74;
+  --gold-a:  rgba(229,173,73,.18);
   /* 進階配色：每類預設跟主題色，可在後台「進階配色」分組覆寫 */
   --c-emphasis: var(--theme-primary);   /* 強調字 */
   --c-cta: var(--theme-primary);        /* CTA 按鈕背景 */
@@ -206,24 +212,24 @@
   --section-pad-y-mobile: 80px;
   --timetable-fs: 13.5px;
 
-  --cream: #f4f1ea;
-  --cream-2: #eeeadf;
-  --cream-3: #e4dfd2;
+  --cream: #F8F6F1;
+  --cream-2: #EEECE7;
+  --cream-3: #E4DFD2;
   --cream-dark: #d6cfbe;
 
-  --sumi: #1f1f1d;
-  --sumi-soft: #3a3a36;
+  --sumi: #1C2720;
+  --sumi-soft: #3a4a40;
   --moss: var(--theme-primary);
   --moss-light: var(--theme-primary-light);
   --moss-soft: var(--theme-primary-soft);
 
-  --ash: #7a7871;
-  --ash-light: #a8a69f;
-  --ash-soft: #c4c1b8;
+  --ash: #82978E;
+  --ash-light: #a4b3aa;
+  --ash-soft: #c4cfc8;
 
-  --line: rgba(31,31,29,.08);
-  --line-ink: rgba(31,31,29,.16);
-  --line-soft: rgba(31,31,29,.04);
+  --line: rgba(28,39,32,.10);
+  --line-ink: rgba(28,39,32,.16);
+  --line-soft: rgba(28,39,32,.04);
 
   --mincho: 'Shippori Mincho','Noto Serif TC',serif;
   --cormorant: 'Cormorant Garamond',serif;
@@ -1385,11 +1391,11 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
         <p class="af-hint" style="margin-bottom:12px">調整全站主要內容區的最大寬度與左右留白。兩邊留多一點會讓版面更輕盈。</p>
         <div class="af">
           <label>內容最大寬度 <span id="content-max-val">1100</span> px</label>
-          <input type="range" id="x-content-max" min="800" max="1280" step="10" value="1100">
+          <input type="range" id="x-content-max" min="800" max="2560" step="10" value="1100">
         </div>
         <div class="af">
           <label>左右邊界 <span id="content-pad-val">44</span> px</label>
-          <input type="range" id="x-content-pad" min="20" max="120" step="2" value="44">
+          <input type="range" id="x-content-pad" min="20" max="240" step="2" value="44">
         </div>
       </div>
       <div class="admin-sec">
@@ -1397,11 +1403,11 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
         <p class="af-hint" style="margin-bottom:12px">同時套用至所有區塊（療程、Promise、醫師、Blog、見證、FAQ、門診時間、聯絡）。</p>
         <div class="af">
           <label>桌機 — 區塊上下留白 <span id="section-pad-y-val">130</span> px</label>
-          <input type="range" id="x-section-pad-y" min="40" max="220" step="2" value="130">
+          <input type="range" id="x-section-pad-y" min="40" max="440" step="2" value="130">
         </div>
         <div class="af">
           <label>手機 — 區塊上下留白 <span id="section-pad-y-mobile-val">80</span> px</label>
-          <input type="range" id="x-section-pad-y-mobile" min="20" max="160" step="2" value="80">
+          <input type="range" id="x-section-pad-y-mobile" min="20" max="320" step="2" value="80">
         </div>
       </div>
       <div class="admin-sec">
@@ -1449,13 +1455,17 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
       </div>
       <h3 class="admin-section-title">主題色系</h3>
       <div class="theme-grid">
+        <button class="theme-card" data-theme="forest" style="--c:#E5AD49">
+          <span class="theme-dot" style="background:#E5AD49"></span>
+          <span>森林金（預設・日濟安風）</span>
+        </button>
         <button class="theme-card" data-theme="orange" style="--c:#D47A2A">
           <span class="theme-dot" style="background:#D47A2A"></span>
-          <span>暖橘（預設）</span>
+          <span>暖橘</span>
         </button>
         <button class="theme-card" data-theme="moss" style="--c:#3d4a3d">
           <span class="theme-dot" style="background:#3d4a3d"></span>
-          <span>墨綠（原版）</span>
+          <span>墨綠</span>
         </button>
         <button class="theme-card" data-theme="brown" style="--c:#8b5e3c">
           <span class="theme-dot" style="background:#8b5e3c"></span>
@@ -1470,12 +1480,12 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
       <h3 class="admin-section-title">自訂主色</h3>
       <div class="fg">
         <label>主強調色（主題色 / CTA / 強調字）</label>
-        <input type="color" id="custom-primary" value="#D47A2A">
+        <input type="color" id="custom-primary" value="#E5AD49">
       </div>
       <div class="fg">
         <label>頁面背景色</label>
-        <input type="color" id="x-bg-color" value="#f4f1ea">
-        <button class="btn-small" type="button" style="margin-top:6px" onclick="document.getElementById('x-bg-color').value='#f4f1ea';document.getElementById('x-bg-color').dispatchEvent(new Event('input'))">重設預設米色</button>
+        <input type="color" id="x-bg-color" value="#F8F6F1">
+        <button class="btn-small" type="button" style="margin-top:6px" onclick="document.getElementById('x-bg-color').value='#F8F6F1';document.getElementById('x-bg-color').dispatchEvent(new Event('input'))">重設預設米色</button>
       </div>
 
       <h3 class="admin-section-title">進階配色（指定哪些元素跟主題色）</h3>
@@ -1819,8 +1829,8 @@ const DEFAULT_STATE = {
   heroAutoplay: true,
   heroInterval: 5,
   appearance: {
-    theme: 'orange',
-    primary: '#D47A2A',
+    theme: 'forest',
+    primary: '#E5AD49',
     fsH1: 92,
     fsH2: 52,
     fsBody: 15.5,
@@ -1832,7 +1842,7 @@ const DEFAULT_STATE = {
     svcColsMobile: '2',
     contentMax: 1100,
     contentPad: 44,
-    bgColor: '#f4f1ea',
+    bgColor: '#F8F6F1',
     heroImageY: 50,
     fsBrandCn: 16,
     fsBrandEn: 11.5,
@@ -1851,6 +1861,7 @@ const DEFAULT_STATE = {
 
 // 主題色預設方案
 const THEMES = {
+  forest: { primary:'#E5AD49', light:'#EBB84E', soft:'#C68E2A' },  // 森林金（日濟安風）
   orange: { primary:'#D47A2A', light:'#E59450', soft:'#B8662A' },
   moss:   { primary:'#3d4a3d', light:'#5a6b5a', soft:'#6b7a6b' },
   brown:  { primary:'#8b5e3c', light:'#a87a55', soft:'#6e4830' },
