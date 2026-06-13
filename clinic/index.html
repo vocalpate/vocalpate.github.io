@@ -211,6 +211,7 @@
   --section-pad-y: 130px;
   --section-pad-y-mobile: 80px;
   --timetable-fs: 13.5px;
+  --sec-title-maxw: 900px;  /* 區塊標題（H2）最大寬度，0 = 不限 */
 
   --cream: #F8F6F1;
   --cream-2: #EEECE7;
@@ -378,7 +379,8 @@ body::after{
 .hero-slide img{width:100%;height:100%;object-fit:cover;object-position:center var(--hero-img-y, 50%)}
 .hero-slide-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mincho);font-size:180px;color:var(--forest);opacity:.18;line-height:1}
 
-.hero-slide-label{position:absolute;top:36px;left:36px;right:36px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--cream);z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+/* 推到下方避開 nav；右側收進來不會撞到 LINE 預約按鈕 */
+.hero-slide-label{position:absolute;top:108px;left:40px;right:200px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--cream);z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.3);opacity:.55}
 .hero-slide-footer{position:absolute;bottom:40px;left:40px;right:40px;display:flex;justify-content:space-between;align-items:flex-end;z-index:2;color:var(--cream);text-shadow:0 2px 8px rgba(0,0,0,.4)}
 .hero-slide-title{font-family:var(--mincho);font-size:18px;letter-spacing:.1em}
 .hero-slide-title-en{font-family:var(--cormorant);font-style:italic;font-size:13px;opacity:.8;margin-top:2px}
@@ -446,7 +448,7 @@ body::after{
 .sec-tag{display:flex;align-items:center;justify-content:center;gap:14px;font-family:var(--cormorant);font-style:italic;font-size:14px;color:var(--ash);letter-spacing:.15em;margin-bottom:24px}
 .sec-tag::before,.sec-tag::after{content:'';width:28px;height:1px;background:var(--line-ink)}
 .sec-tag .jp{font-family:var(--mincho);font-style:normal;color:var(--moss);margin-right:4px}
-.sec-title{font-family:var(--mincho);font-size:clamp(28px,4vw,var(--fs-h2));font-weight:400;line-height:1.4;letter-spacing:.05em;color:var(--sumi)}
+.sec-title{font-family:var(--mincho);font-size:clamp(28px,4vw,var(--fs-h2));font-weight:400;line-height:1.4;letter-spacing:.05em;color:var(--sumi);max-width:var(--sec-title-maxw);margin-left:auto;margin-right:auto}
 .sec-title em{font-family:var(--cormorant);font-style:italic;color:var(--c-emphasis);font-weight:300}
 .sec-sub{margin-top:24px;font-size:15px;color:var(--ash);line-height:2;max-width:580px;margin-left:auto;margin-right:auto}
 @media(max-width:900px){
@@ -1423,6 +1425,10 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
           <label>左右邊界 <span id="content-pad-val">44</span> px</label>
           <input type="range" id="x-content-pad" min="20" max="240" step="2" value="44">
         </div>
+        <div class="af">
+          <label>區塊標題（H2）最大寬度 <span id="sec-title-maxw-val">900</span> px<span style="font-size:11px;color:var(--ash);font-weight:300;margin-left:8px">設大一點讓 H2 變寬、可少一行；設小一點強制換行更聚焦</span></label>
+          <input type="range" id="x-sec-title-maxw" min="320" max="1600" step="10" value="900">
+        </div>
       </div>
       <div class="admin-sec">
         <h3>區塊上下間距（一鍵全域套用）</h3>
@@ -1868,6 +1874,7 @@ const DEFAULT_STATE = {
     svcColsMobile: '2',
     contentMax: 1100,
     contentPad: 44,
+    secTitleMaxw: 900,
     bgColor: '#F8F6F1',
     heroImageY: 50,
     fsBrandCn: 16,
@@ -3499,6 +3506,7 @@ function applyAppearance(a){
   // 內容寬度與邊界
   if(a.contentMax) root.setProperty('--content-max', a.contentMax + 'px');
   if(a.contentPad !== undefined && a.contentPad !== null) root.setProperty('--content-pad', a.contentPad + 'px');
+  if(a.secTitleMaxw !== undefined && a.secTitleMaxw !== null) root.setProperty('--sec-title-maxw', a.secTitleMaxw + 'px');
   // 背景主色
   if(a.bgColor) root.setProperty('--cream', a.bgColor);
   // Hero 圖片垂直位置
@@ -3571,6 +3579,7 @@ function syncAppearanceUI(){
   setSlider('x-hero-h-mobile',   'hero-h-mobile-val',   a.heroHeightMobile  || 420);
   setSlider('x-content-max',     'content-max-val',     a.contentMax || 1100);
   setSlider('x-content-pad',     'content-pad-val',     a.contentPad !== undefined ? a.contentPad : 44);
+  setSlider('x-sec-title-maxw',  'sec-title-maxw-val',  a.secTitleMaxw !== undefined ? a.secTitleMaxw : 900);
   setSlider('x-hero-img-y',      'hero-img-y-val',      a.heroImageY !== undefined ? a.heroImageY : 50);
   setSlider('x-fs-brand-cn',     'fs-brand-cn-val',     a.fsBrandCn || 16);
   setSlider('x-fs-brand-en',     'fs-brand-en-val',     a.fsBrandEn || 11.5);
@@ -3664,6 +3673,7 @@ function bindAppearanceControls(){
   // 內容寬度與邊界
   bindRange('x-content-max', 'content-max-val', 'contentMax');
   bindRange('x-content-pad', 'content-pad-val', 'contentPad');
+  bindRange('x-sec-title-maxw', 'sec-title-maxw-val', 'secTitleMaxw');
   // Hero 圖片 Y
   bindRange('x-hero-img-y', 'hero-img-y-val', 'heroImageY');
   // 各類字級
