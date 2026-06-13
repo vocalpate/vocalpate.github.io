@@ -1161,9 +1161,9 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
     <div class="sec-head reveal" style="text-align:center">
       <div class="sec-tag sec-tag-center"><span class="jp">診療フロー</span>／ process</div>
       <h2 class="sec-title" id="process-heading">不用急著決定，<br>先讓醫師<em>好好了解你</em>。</h2>
-      <p class="sec-sub">每一次門診都從理解開始。下方四個步驟，是您從第一次接觸到長期照護的完整流程。</p>
+      <p class="sec-sub" id="process-sub">每一次門診都從理解開始。下方四個步驟，是您從第一次接觸到長期照護的完整流程。</p>
     </div>
-    <div class="process-grid reveal">
+    <div class="process-grid reveal" id="process-grid">
       <div class="process-step">
         <div class="ps-circle">01</div>
         <h3 class="ps-h">確認需求與主訴</h3>
@@ -1358,7 +1358,7 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
       <button class="admin-tab" data-pane="7">Ticker</button>
       <button class="admin-tab" data-pane="8">區塊標題</button>
       <button class="admin-tab" data-pane="9">Promise</button>
-      <button class="admin-tab" data-pane="10">醫師</button>
+      <button class="admin-tab" data-pane="10">醫師/流程</button>
       <button class="admin-tab" data-pane="11">Blog</button>
       <button class="admin-tab" data-pane="12">見證</button>
       <button class="admin-tab" data-pane="13">FAQ</button>
@@ -1377,7 +1377,7 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
       <option value="7">Ticker</option>
       <option value="8">區塊標題</option>
       <option value="9">Promise</option>
-      <option value="10">醫師</option>
+      <option value="10">醫師/流程</option>
       <option value="11">Blog</option>
       <option value="12">見證</option>
       <option value="13">FAQ</option>
@@ -1898,6 +1898,7 @@ const DEFAULT_CONTENT = {
     services:     { jp: '診療項目',     en: 'our treatment' },
     promise:      { jp: '當院約束',     en: 'our promise' },
     doctor:       { jp: '院長介紹',     en: 'doctor' },
+    process:      { jp: '診療フロー',   en: 'process' },
     blog:         { jp: '院長コラム',   en: 'column' },
     testimonials: { jp: '患者の声',     en: 'voices' },
     faq:          { jp: 'よくあるご質問', en: 'faq' },
@@ -1911,6 +1912,8 @@ const DEFAULT_CONTENT = {
     servicesSub:  '點選了解各療程詳情，找到最適合您的照護方案。',
     promise:      '從<em>診療</em>到<em>照護</em>，<br>由院長親自為您把脈',
     doctor:       '在傳統與現代之間，<br>尋求一種<em>平衡之道</em>',
+    process:      '不用急著決定，<br>先讓醫師<em>好好了解你</em>。',
+    processSub:   '每一次門診都從理解開始。下方四個步驟，是您從第一次接觸到長期照護的完整流程。',
     blog:         '衛教專欄，<br>把<em>中醫智慧</em>帶進日常',
     testimonials: '來自患者的<em>真實回饋</em>',
     faq:          '在預約之前，<br>或許你也<em>想知道</em>',
@@ -1924,9 +1927,16 @@ const DEFAULT_CONTENT = {
     { num: '02 ／ Privacy',      jp: '靜', title: '獨立診間，隱私無虞',           desc: '全院採預約制、獨立診間設計，避免與其他患者交會。您可以在完全放鬆的環境中接受診療與休息。' },
     { num: '03 ／ Research',     jp: '精', title: '持續精進，與時俱進的醫學',     desc: '定期參與國內外學會、跨院技術交流與院內研習，確保每一項療程都建立在最新的臨床實證之上。' }
   ],
+  process: [
+    { title: '確認需求與主訴', desc: '先聆聽您想處理的不適、症狀或療程目標，必要時請您填寫初診資料卡。' },
+    { title: '依需求進行評估', desc: '中醫四診合參（望聞問切）加上現代臨床評估，找出真正的根源，而不只是抑制症狀。' },
+    { title: '安排合適療程', desc: '為您量身規劃單次治療或療程方案，並明確說明療程節奏、預期效果與費用。' },
+    { title: '固定回診追蹤', desc: '依個別狀況調整節奏，每次回診都會微調用藥與療程，讓改善能長久維持。' }
+  ],
   doctor: {
     name: '邱子瑜 醫師',
     title: 'Director & Founder',
+    quote: '— Healing begins with understanding,<br>and unfolds with patience.',
     paragraphs: [
       '邱子瑜中醫師創立於 2015 年，我們相信真正的治療不僅在於症狀的緩解，更在於身體、情緒與生活的整體協調。',
       '診所以「精準」為核心理念，由邱子瑜醫師領軍，結合多位專科中醫師團隊，引入針刀、美顏針灸、體質醫學與現代臨床評估工具，為每位患者量身打造個人化療程計畫。',
@@ -2226,6 +2236,29 @@ function renderContent(){
     if(desc) desc.textContent = p.desc;
   });
 
+  // 2b. Process 四步驟
+  if(c.process && Array.isArray(c.process)){
+    document.querySelectorAll('#process .process-step').forEach((step, i) => {
+      const p = c.process[i];
+      if(!p) return;
+      const h = step.querySelector('.ps-h');
+      const desc = step.querySelector('.ps-p');
+      if(h) h.textContent = p.title || '';
+      if(desc) desc.textContent = p.desc || '';
+    });
+  }
+  // process 區塊標題與副標
+  const processHeading = document.getElementById('process-heading');
+  if(processHeading && c.sectionTitles && c.sectionTitles.process) processHeading.innerHTML = c.sectionTitles.process;
+  const processSub = document.getElementById('process-sub');
+  if(processSub && c.sectionTitles && c.sectionTitles.processSub) processSub.textContent = c.sectionTitles.processSub;
+  // process 區塊小標（jp / en）
+  const processSecTag = document.querySelector('#process .sec-tag');
+  if(processSecTag && c.sectionLabels && c.sectionLabels.process){
+    const lab = c.sectionLabels.process;
+    processSecTag.innerHTML = '<span class="jp">' + (lab.jp||'') + '</span>／ ' + (lab.en||'');
+  }
+
   // 3. Doctor
   const d = c.doctor;
   if(d){
@@ -2233,10 +2266,15 @@ function renderContent(){
     const titleImg = document.getElementById('d-title-img');
     const sig = document.getElementById('d-name');
     const sigEn = document.querySelector('.doctor-sig-en');
+    const quoteEl = document.getElementById('d-quote');
     if(nameImg) nameImg.textContent = d.name;
     if(titleImg) titleImg.textContent = d.title;
     if(sig) sig.textContent = d.signature || d.name;
     if(sigEn) sigEn.textContent = d.signatureEn || '';
+    if(quoteEl && d.quote !== undefined){
+      if(d.quote === '') quoteEl.style.display = 'none';
+      else { quoteEl.style.display = ''; quoteEl.innerHTML = d.quote; }
+    }
     // 段落
     ['d-p1','d-p2','d-p3'].forEach((id, i) => {
       const el = document.getElementById(id);
@@ -2887,9 +2925,10 @@ function renderSectionsEditor(){
   if(!body) return;
   const labels = state.content.sectionLabels || {};
   const titles = state.content.sectionTitles || {};
-  const keys = ['services','promise','doctor','blog','testimonials','faq','booking','contact'];
+  const keys = ['services','promise','process','doctor','blog','testimonials','faq','booking','contact'];
   const extraTitles = [
     {k:'servicesSub', label:'Services 副標（純文字）'},
+    {k:'processSub',  label:'看診流程 副標（純文字）'},
     {k:'faqIntro',    label:'FAQ 介紹文（純文字）'}
   ];
   let html = '';
@@ -2966,10 +3005,22 @@ function renderDoctorEditor(){
     + '<div class="fg"><label>落款姓名</label><input data-f="signature" value="' + esc(d.signature) + '"></div>'
     + '<div class="fg"><label>落款英文</label><input data-f="signatureEn" value="' + esc(d.signatureEn) + '"></div>'
     + '</div></div>';
+  html += '<div class="edit-card"><div class="fg"><label>義式英文 Quote（金色左邊線小字。支援 &lt;br&gt; 換行，留空隱藏）</label><textarea data-f="quote" rows="2">' + esc(d.quote || '') + '</textarea></div></div>';
   html += '<div class="edit-card"><div style="font-family:var(--mincho);font-size:13px;color:var(--ash);margin-bottom:10px">三段介紹</div>';
   for(let i=0; i<3; i++){
     html += '<div class="fg"><label>段落 ' + (i+1) + '</label><textarea data-pi="' + i + '" rows="3">' + esc(d.paragraphs[i]||'') + '</textarea></div>';
   }
+  html += '</div>';
+  // 看診流程 4 步驟（追加在同一個 pane）
+  const proc = state.content.process || [];
+  html += '<div class="edit-card"><div style="font-family:var(--mincho);font-size:15px;color:var(--sumi);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line)">看診流程（4 步驟）</div>';
+  proc.forEach((p, i) => {
+    html += '<div style="margin-bottom:14px;padding-bottom:12px;' + (i<proc.length-1?'border-bottom:1px dashed var(--line);':'') + '">'
+      + '<div style="font-size:12px;color:var(--ash);margin-bottom:6px">步驟 0' + (i+1) + '</div>'
+      + '<div class="fg"><label>標題</label><input data-procidx="' + i + '" data-procfield="title" value="' + esc(p.title||'') + '"></div>'
+      + '<div class="fg"><label>說明</label><textarea data-procidx="' + i + '" data-procfield="desc" rows="2">' + esc(p.desc||'') + '</textarea></div>'
+      + '</div>';
+  });
   html += '</div>';
   html += '<div class="edit-card"><div style="font-family:var(--mincho);font-size:13px;color:var(--ash);margin-bottom:10px">三項統計</div>';
   for(let i=0; i<3; i++){
@@ -2990,6 +3041,11 @@ function renderDoctorEditor(){
         state.content.doctor.paragraphs[+t.dataset.pi] = t.value;
       } else if(t.dataset.si !== undefined){
         state.content.doctor.stats[+t.dataset.si][t.dataset.sf] = t.value;
+      } else if(t.dataset.procidx !== undefined){
+        if(!state.content.process) state.content.process = [];
+        const i = +t.dataset.procidx;
+        if(!state.content.process[i]) state.content.process[i] = {title:'',desc:''};
+        state.content.process[i][t.dataset.procfield] = t.value;
       }
       renderContent();
       debouncedSave();
