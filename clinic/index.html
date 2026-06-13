@@ -184,13 +184,16 @@
   /* 森林風固定色（日濟安主結構：深綠 hero、footer、sage 輔色） */
   --forest:  #425149;
   --forest2: #2A3830;
-  --gold:    #E5AD49;
+  --gold:    #E5AD49;                   /* 亮金：深色底文字、線條、圓點、按鈕底色用 */
+  --gold-ink: color-mix(in srgb, var(--theme-primary) 58%, #1f1505);  /* 深古銅金：淺底上的金色文字（確保可讀） */
   --sage:    #839D74;
   --gold-a:  rgba(229,173,73,.18);
-  /* 進階配色：每類預設跟主題色，可在後台「進階配色」分組覆寫 */
-  --c-emphasis: var(--theme-primary);   /* 強調字 */
+  /* 進階配色：每類預設跟主題色，可在後台「進階配色」分組覆寫
+     emphasis / arrow 是「淺底上的文字」→ 預設用加深版（亮金在白底看不清）；
+     cta / hover / selection 是「底色 / 線條 / 反白」→ 維持亮主題色。 */
+  --c-emphasis: var(--gold-ink);        /* 強調字（淺底文字，加深確保可讀） */
   --c-cta: var(--theme-primary);        /* CTA 按鈕背景 */
-  --c-arrow: var(--theme-primary);      /* 連結箭頭（深入了解→） */
+  --c-arrow: var(--gold-ink);           /* 連結箭頭（深入了解→，淺底文字） */
   --c-hover: var(--theme-primary);      /* Hover 線條 */
   --c-selection: var(--theme-primary);  /* 反白色 */
 
@@ -224,9 +227,9 @@
   --moss-light: var(--theme-primary-light);
   --moss-soft: var(--theme-primary-soft);
 
-  --ash: #82978E;
-  --ash-light: #a4b3aa;
-  --ash-soft: #c4cfc8;
+  --ash: #51655B;        /* 次要文字（描述、副標）：加深以確保淺底可讀 */
+  --ash-light: #7c8f86;  /* 較淺：meta / 標籤 */
+  --ash-soft: #a4b3aa;   /* 最淺：純裝飾小字 */
 
   --line: rgba(28,39,32,.10);
   --line-ink: rgba(28,39,32,.16);
@@ -459,7 +462,7 @@ body::after{
 
 /* ═══════════════ 療程選單（精簡圖標卡片） ═══════════════ */
 /* Hero 價值主張副標 */
-.hero-subvp{margin-top:18px;font-family:var(--mincho);font-size:15.5px;font-weight:500;line-height:1.7;color:var(--sumi);letter-spacing:.04em;padding:10px 16px;background:rgba(212,122,42,.06);border-left:3px solid var(--c-emphasis,var(--moss));border-radius:2px;display:inline-block;max-width:520px}
+/* 註：.hero-subvp 主樣式定義在 Hero 區塊（深綠底用金色字）。此處只保留通用行為。 */
 .hero-subvp:empty{display:none}
 
 /* 痛點放大 Pain Points */
@@ -590,7 +593,7 @@ body::after{
 .svc-row-body{display:flex;flex-direction:column;justify-content:center;padding:76px 68px;background:#fff;position:relative;overflow:hidden}
 .svc-rows .svc-row.flip .svc-row-body{background:var(--cream-2)}
 .svc-row-ghost{position:absolute;top:-16px;right:28px;font-family:var(--cormorant);font-style:italic;font-weight:300;font-size:7rem;color:rgba(66,81,73,.05);line-height:1;pointer-events:none;user-select:none}
-.svc-row-en{font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--gold);letter-spacing:.16em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.svc-row-en{font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--gold-ink);letter-spacing:.16em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:12px}
 .svc-row-en::before{content:'';display:inline-block;width:28px;height:1px;background:var(--gold);flex-shrink:0}
 .svc-row-name{font-family:var(--mincho);font-size:clamp(24px,3vw,30px);font-weight:500;color:var(--sumi);line-height:1.4;letter-spacing:.05em;margin-bottom:18px}
 .svc-row-desc{font-size:14.5px;line-height:1.95;color:var(--ash);font-weight:300;max-width:420px;margin-bottom:28px}
@@ -677,7 +680,7 @@ body::after{
 .process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
 .process-grid::before{content:'';position:absolute;top:31px;left:10%;right:10%;height:1px;background:repeating-linear-gradient(to right,var(--gold) 0,var(--gold) 6px,transparent 6px,transparent 12px);opacity:.55;z-index:0}
 .process-step{padding:0 24px 0 0;position:relative;z-index:1;text-align:left}
-.ps-circle{width:62px;height:62px;border-radius:50%;border:1px solid rgba(229,173,73,.4);background:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--cormorant);font-style:italic;font-size:1.45rem;font-weight:300;color:var(--gold);margin-bottom:26px;box-shadow:6px 6px 14px rgba(0,0,0,.06),-6px -6px 14px rgba(255,255,255,.85);transition:background .35s,color .35s,box-shadow .35s,border-color .35s}
+.ps-circle{width:62px;height:62px;border-radius:50%;border:1px solid rgba(229,173,73,.4);background:var(--cream);display:flex;align-items:center;justify-content:center;font-family:var(--cormorant);font-style:italic;font-size:1.45rem;font-weight:300;color:var(--gold-ink);margin-bottom:26px;box-shadow:6px 6px 14px rgba(0,0,0,.06),-6px -6px 14px rgba(255,255,255,.85);transition:background .35s,color .35s,box-shadow .35s,border-color .35s}
 .process-step:hover .ps-circle{background:var(--gold);color:#fff;border-color:transparent;box-shadow:inset 4px 4px 10px rgba(180,100,10,.25),inset -4px -4px 10px rgba(255,200,110,.3)}
 .ps-h{font-family:var(--mincho);font-weight:500;font-size:1rem;color:var(--sumi);margin-bottom:10px;line-height:1.55;letter-spacing:.04em}
 .ps-p{font-size:13.5px;line-height:1.85;font-weight:300;color:var(--ash);max-width:240px}
