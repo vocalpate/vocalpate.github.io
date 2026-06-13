@@ -577,6 +577,39 @@ body::after{
 }
 .svc-tile:hover .svc-tile-cta .cta-arrow{transform:translateX(3px)}
 
+/* ═══════════════ 療程：交替大圖排版（日濟安風） ═══════════════ */
+.svc-grid.svc-rows{display:flex;flex-direction:column;max-width:none;width:100%;gap:0;grid-template-columns:none}
+.svc-rows .svc-row{display:grid;grid-template-columns:1fr 1fr;min-height:480px;cursor:pointer;position:relative}
+.svc-rows .svc-row + .svc-row{border-top:1px solid var(--line)}
+.svc-rows .svc-row.flip{direction:rtl}
+.svc-rows .svc-row.flip > *{direction:ltr}
+.svc-row-img{overflow:hidden;background:linear-gradient(160deg,var(--cream-2),var(--cream-dark));position:relative}
+.svc-row-img img{width:100%;height:100%;object-fit:cover;transition:transform .9s cubic-bezier(.25,.46,.45,.94)}
+.svc-rows .svc-row:hover .svc-row-img img{transform:scale(1.04)}
+.svc-row-img-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mincho);font-size:clamp(120px,18vw,200px);color:var(--forest);opacity:.16;line-height:1;letter-spacing:-.04em;font-weight:400;user-select:none}
+.svc-row-body{display:flex;flex-direction:column;justify-content:center;padding:76px 68px;background:#fff;position:relative;overflow:hidden}
+.svc-rows .svc-row.flip .svc-row-body{background:var(--cream-2)}
+.svc-row-ghost{position:absolute;top:-16px;right:28px;font-family:var(--cormorant);font-style:italic;font-weight:300;font-size:7rem;color:rgba(66,81,73,.05);line-height:1;pointer-events:none;user-select:none}
+.svc-row-en{font-family:var(--cormorant);font-style:italic;font-size:13px;color:var(--gold);letter-spacing:.16em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.svc-row-en::before{content:'';display:inline-block;width:28px;height:1px;background:var(--gold);flex-shrink:0}
+.svc-row-name{font-family:var(--mincho);font-size:clamp(24px,3vw,30px);font-weight:500;color:var(--sumi);line-height:1.4;letter-spacing:.05em;margin-bottom:18px}
+.svc-row-desc{font-size:14.5px;line-height:1.95;color:var(--ash);font-weight:300;max-width:420px;margin-bottom:28px}
+.svc-row-outcome{font-size:13px;color:var(--c-emphasis,var(--gold));line-height:1.7;letter-spacing:.04em;font-weight:500;margin-bottom:24px;padding:8px 14px;border-left:2px solid var(--gold);background:rgba(229,173,73,.06)}
+.svc-row-cta{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:13px 28px;background:transparent;color:var(--sumi);border:1px solid var(--line-ink);border-radius:100px;font-family:var(--mincho);font-size:13px;letter-spacing:.1em;cursor:pointer;transition:all .35s}
+.svc-row-cta .arrow{transition:transform .35s}
+.svc-rows .svc-row:hover .svc-row-cta{background:var(--sumi);color:#fff;border-color:var(--sumi)}
+.svc-rows .svc-row:hover .svc-row-cta .arrow{transform:translateX(4px)}
+@media(max-width:1100px){
+  .svc-row-body{padding:60px 48px}
+}
+@media(max-width:820px){
+  .svc-rows .svc-row{grid-template-columns:1fr;min-height:0}
+  .svc-rows .svc-row.flip{direction:ltr}
+  .svc-row-img{height:260px;min-height:260px}
+  .svc-row-body{padding:44px 28px 52px}
+  .svc-row-ghost{font-size:5rem;right:16px}
+}
+
 .svc-actions{display:flex;gap:14px;justify-content:center;margin-top:50px;flex-wrap:wrap}
 @media(max-width:900px){
   .svc-actions{flex-direction:column;align-items:stretch;margin-top:40px}
@@ -1444,10 +1477,17 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
       </div>
       <div class="admin-sec">
         <h3>療程排版</h3>
-        <p class="af-hint" style="margin-bottom:12px">控制療程卡片在首頁的每排數量。auto 模式會依空間自動排列。</p>
-        <div class="af-row">
+        <p class="af-hint" style="margin-bottom:12px">兩種版型可選。「交替大圖」是日濟安風，每個療程一整列大圖+文字，視覺節奏較強。</p>
+        <div class="af">
+          <label>排版樣式</label>
+          <select id="x-svc-layout">
+            <option value="grid">卡片網格（原版，多個療程小卡並排）</option>
+            <option value="rows" selected>交替大圖（日濟安風，每療程一整列）</option>
+          </select>
+        </div>
+        <div class="af-row" id="svc-cols-controls">
           <div class="af">
-            <label>桌機每排幾個</label>
+            <label>桌機每排幾個（卡片網格用）</label>
             <select id="x-svc-cols-desktop">
               <option value="auto">auto（自動排版）</option>
               <option value="3">3</option>
@@ -1456,7 +1496,7 @@ body.deep-theme .footer { background: color-mix(in srgb, var(--theme-primary) 14
             </select>
           </div>
           <div class="af">
-            <label>手機每排幾個</label>
+            <label>手機每排幾個（卡片網格用）</label>
             <select id="x-svc-cols-mobile">
               <option value="1">1</option>
               <option value="2" selected>2</option>
@@ -1870,6 +1910,7 @@ const DEFAULT_STATE = {
     tickerDuration: 32,
     heroHeightDesktop: 560,
     heroHeightMobile: 420,
+    svcLayout: 'rows',
     svcColsDesktop: '4',
     svcColsMobile: '2',
     contentMax: 1100,
@@ -2162,14 +2203,50 @@ function renderServices(){
 
   // 套 grid columns：優先使用 appearance 設定
   const a = state.appearance || {};
+  const layout = a.svcLayout || 'rows';
   const colsDesktop = a.svcColsDesktop || '4';
   const colsMobile  = a.svcColsMobile  || '2';
-  grid.classList.toggle('auto-desktop', colsDesktop === 'auto');
-  grid.classList.toggle('auto-mobile',  colsMobile  === 'auto');
+  grid.classList.toggle('svc-rows', layout === 'rows');
+  grid.classList.toggle('auto-desktop', layout !== 'rows' && colsDesktop === 'auto');
+  grid.classList.toggle('auto-mobile',  layout !== 'rows' && colsMobile  === 'auto');
   if(colsDesktop !== 'auto') grid.style.setProperty('--svc-cols-desktop', colsDesktop);
   if(colsMobile  !== 'auto') grid.style.setProperty('--svc-cols-mobile',  colsMobile);
   // 清掉舊的 inline grid-template-columns（由變數接管）
   grid.style.gridTemplateColumns = '';
+
+  // 交替大圖排版（日濟安風）
+  if(layout === 'rows'){
+    grid.innerHTML = list.map((s, i) => {
+      const num = String(i + 1).padStart(2, '0');
+      const imgInner = s.img
+        ? '<img src="' + s.img + '" alt="' + esc(s.name) + '" loading="lazy">'
+        : '<div class="svc-row-img-fallback">' + esc(s.name.slice(0, 1)) + '</div>';
+      const outcomeHtml = (s.outcome && s.outcome.trim())
+        ? '<div class="svc-row-outcome">' + esc(s.outcome) + '</div>'
+        : '';
+      const descHtml = (s.short && s.short.trim())
+        ? '<p class="svc-row-desc">' + esc(s.short) + '</p>'
+        : '';
+      const flipCls = (i % 2 === 1) ? ' flip' : '';
+      return '<div class="svc-row reveal' + flipCls + '" onclick="alert(\'' + s.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'") + ' — 詳細頁即將推出\')">'
+        + '<div class="svc-row-img">' + imgInner + '</div>'
+        + '<div class="svc-row-body">'
+        +   '<div class="svc-row-ghost">' + num + '</div>'
+        +   '<div class="svc-row-en">' + esc(s.en || '') + '</div>'
+        +   '<h3 class="svc-row-name">' + esc(s.name) + '</h3>'
+        +   descHtml
+        +   outcomeHtml
+        +   '<button class="svc-row-cta" type="button">深入了解 <span class="arrow">→</span></button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+
+    const sel = document.getElementById('booking-select');
+    if(sel) sel.innerHTML = '<option value="">請選擇</option>' + list.map(s => '<option>' + s.name + '</option>').join('') + '<option>其他諮詢</option>';
+    const svcCount = document.getElementById('svc-count');
+    if(svcCount) svcCount.textContent = state.services.length;
+    return;
+  }
 
   grid.innerHTML = list.map((s, i) => {
     const st = s.style || DEFAULT_SVC_STYLE;
@@ -3591,11 +3668,17 @@ function syncAppearanceUI(){
   setSlider('x-timetable-fs',          'timetable-fs-val',          a.timetableFs !== undefined ? a.timetableFs : 13.5);
   const tn = document.getElementById('x-timetable-name');
   if(tn) tn.value = a.timetableName !== undefined ? a.timetableName : '邱子瑜';
+  // 療程排版 select
+  const sl = document.getElementById('x-svc-layout');
+  if(sl) sl.value = a.svcLayout || 'rows';
   // 療程欄數 select
   const cd = document.getElementById('x-svc-cols-desktop');
   if(cd) cd.value = a.svcColsDesktop || '4';
   const cm = document.getElementById('x-svc-cols-mobile');
   if(cm) cm.value = a.svcColsMobile  || '2';
+  // 「卡片網格」相關控制只在 layout=grid 時顯示
+  const colsCtrls = document.getElementById('svc-cols-controls');
+  if(colsCtrls) colsCtrls.style.display = (a.svcLayout || 'rows') === 'rows' ? 'none' : '';
   // 深度主題 checkbox
   const dt = document.getElementById('deep-theme-toggle');
   if(dt) dt.checked = !!a.deepTheme;
@@ -3694,6 +3777,17 @@ function bindAppearanceControls(){
     });
   }
 
+  // 療程排版 select
+  const sl = document.getElementById('x-svc-layout');
+  if(sl){
+    sl.addEventListener('change', e => {
+      state.appearance.svcLayout = e.target.value;
+      const colsCtrls = document.getElementById('svc-cols-controls');
+      if(colsCtrls) colsCtrls.style.display = e.target.value === 'rows' ? 'none' : '';
+      applyAppearance(state.appearance);
+      renderServices();
+    });
+  }
   // 療程欄數 select
   const cd = document.getElementById('x-svc-cols-desktop');
   if(cd){
