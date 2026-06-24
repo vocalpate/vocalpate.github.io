@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>人體症狀問診輔助系統（MVP）</title>
+<style>
+  /* ===== 基本樣式：手機優先 ===== */
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: #f4f6f9; color: #1f2933; line-height: 1.6;
+  }
+  header {
+    background: #2c5f8a; color: #fff; padding: 14px 16px; text-align: center;
+    position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  header h1 { font-size: 17px; margin: 0; }
+  header .sub { font-size: 12px; opacity: .8; margin-top: 2px; }
+  .wrap { max-width: 540px; margin: 0 auto; padding: 16px; }
+
+  /* 免責聲明 */
+  .disclaimer {
+    background: #fff4e5; border: 1px solid #ffd8a8; color: #8a5300;
+    font-size: 12px; padding: 10px 12px; border-radius: 8px; margin-bottom: 16px;
+  }
+
+  /* 步驟卡片 */
+  .card {
+    background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .card h2 { font-size: 15px; margin: 0 0 12px; color: #2c5f8a; }
+  .step-num {
+    display: inline-block; background: #2c5f8a; color: #fff; width: 22px; height: 22px;
+    border-radius: 50%; text-align: center; line-height: 22px; font-size: 13px; margin-right: 6px;
+  }
+
+  /* 人體圖切換 */
+  .body-toggle { text-align: center; margin-bottom: 8px; }
+  .body-toggle button {
+    background: #e4e9f0; border: none; padding: 6px 16px; font-size: 13px; cursor: pointer;
+    color: #2c5f8a;
+  }
+  .body-toggle button:first-child { border-radius: 16px 0 0 16px; }
+  .body-toggle button:last-child { border-radius: 0 16px 16px 0; }
+  .body-toggle button.active { background: #2c5f8a; color: #fff; }
+
+  .body-svg { display: block; margin: 0 auto; max-width: 240px; }
+  .body-svg .region { fill: #c9d6e3; stroke: #fff; stroke-width: 1.5; cursor: pointer; transition: fill .15s; }
+  .body-svg .region:hover, .body-svg .region.sel { fill: #2c5f8a; }
+  .body-svg .region.ready { fill: #8fb8d8; }
+  .hint { font-size: 12px; color: #7b8794; text-align: center; margin-top: 8px; }
+
+  /* 選項按鈕 */
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opt {
+    border: 1.5px solid #cbd5e0; background: #fff; border-radius: 20px;
+    padding: 8px 14px; font-size: 14px; cursor: pointer; color: #334;
+  }
+  .opt.on { background: #2c5f8a; color: #fff; border-color: #2c5f8a; }
+  .q-block { margin-bottom: 18px; }
+  .q-block .q-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .free-input {
+    width: 100%; margin-top: 8px; padding: 8px 10px; border: 1px solid #cbd5e0;
+    border-radius: 8px; font-size: 14px;
+  }
+
+  .btn-primary {
+    display: block; width: 100%; background: #2c5f8a; color: #fff; border: none;
+    padding: 14px; font-size: 16px; border-radius: 10px; cursor: pointer; margin-top: 8px;
+  }
+  .btn-secondary {
+    display: block; width: 100%; background: #fff; color: #2c5f8a; border: 1.5px solid #2c5f8a;
+    padding: 12px; font-size: 14px; border-radius: 10px; cursor: pointer; margin-top: 10px;
+  }
+
+  /* 結果 */
+  .result-item {
+    border-left: 4px solid #2c5f8a; background: #f0f5fa; padding: 12px;
+    border-radius: 0 8px 8px 0; margin-bottom: 10px;
+  }
+  .result-item .dx { font-size: 15px; font-weight: 700; color: #2c5f8a; }
+  .result-item .score { float: right; font-size: 12px; color: #7b8794; }
+  .result-item .why { font-size: 13px; color: #52606d; margin-top: 6px; }
+  .result-item.top { border-left-color: #d9480f; background: #fff4ee; }
+  .result-item.top .dx { color: #d9480f; }
+
+  .hidden { display: none; }
+  .summary-tag { display:inline-block; background:#e4e9f0; border-radius:6px; padding:2px 8px; font-size:12px; margin:2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>人體症狀問診輔助系統</h1>
+  <div class="sub">MVP 測試版 · 肩膀模組</div>
+</header>
+
+<div class="wrap">
+  <div class="disclaimer">
+    ⚠️ 本工具僅為<b>問診流程輔助與鑑別參考</b>，非診斷結論。最終判斷須由醫師依理學檢查與影像綜合評估。
+  </div>
+  <div style="text-align:right;margin-bottom:12px;">
+    <a href="editor.html" style="font-size:13px;color:#2c5f8a;text-decoration:none;">⚙️ 編輯資料庫 →</a>
+  </div>
+
+  <!-- 步驟 1：選部位 -->
+  <div class="card" id="card-body">
+    <h2><span class="step-num">1</span>選擇不適部位</h2>
+    <div class="body-toggle">
+      <button id="btn-front" class="active" onclick="switchView('front')">正面</button>
+      <button id="btn-back" onclick="switchView('back')">背面</button>
+    </div>
+    <!-- 正面人體 -->
+    <svg id="svg-front" class="body-svg" viewBox="0 0 200 380" xmlns="http://www.w3.org/2000/svg">
+      <!-- 頭 -->
+      <circle class="region" data-part="head" cx="100" cy="30" r="22"/>
+      <!-- 頸 -->
+      <rect class="region" data-part="neck" x="90" y="50" width="20" height="18" rx="4"/>
+      <!-- 軀幹 -->
+      <rect class="region" data-part="trunk" x="70" y="68" width="60" height="90" rx="12"/>
+      <!-- 左右肩 (ready) -->
+      <circle class="region ready" data-part="shoulder" cx="64" cy="78" r="16"/>
+      <circle class="region ready" data-part="shoulder" cx="136" cy="78" r="16"/>
+      <!-- 上臂 -->
+      <rect class="region" data-part="upperarm" x="48" y="92" width="18" height="60" rx="9"/>
+      <rect class="region" data-part="upperarm" x="134" y="92" width="18" height="60" rx="9"/>
+      <!-- 前臂/手 -->
+      <rect class="region" data-part="forearm" x="44" y="152" width="16" height="60" rx="8"/>
+      <rect class="region" data-part="forearm" x="140" y="152" width="16" height="60" rx="8"/>
+      <!-- 髖 -->
+      <rect class="region" data-part="hip" x="74" y="158" width="52" height="30" rx="10"/>
+      <!-- 大腿 -->
+      <rect class="region" data-part="thigh" x="76" y="188" width="20" height="70" rx="10"/>
+      <rect class="region" data-part="thigh" x="104" y="188" width="20" height="70" rx="10"/>
+      <!-- 膝 -->
+      <circle class="region" data-part="knee" cx="86" cy="268" r="13"/>
+      <circle class="region" data-part="knee" cx="114" cy="268" r="13"/>
+      <!-- 小腿/腳 -->
+      <rect class="region" data-part="leg" x="78" y="282" width="16" height="80" rx="8"/>
+      <rect class="region" data-part="leg" x="106" y="282" width="16" height="80" rx="8"/>
+    </svg>
+    <!-- 背面人體 -->
+    <svg id="svg-back" class="body-svg hidden" viewBox="0 0 200 380" xmlns="http://www.w3.org/2000/svg">
+      <circle class="region" data-part="head" cx="100" cy="30" r="22"/>
+      <rect class="region" data-part="neck" x="90" y="50" width="20" height="18" rx="4"/>
+      <rect class="region ready" data-part="shoulder" x="62" y="66" width="76" height="26" rx="10"/>
+      <rect class="region" data-part="upperback" x="72" y="92" width="56" height="40" rx="8"/>
+      <rect class="region" data-part="lowback" x="76" y="132" width="48" height="40" rx="8"/>
+      <rect class="region" data-part="buttock" x="74" y="172" width="52" height="30" rx="10"/>
+      <rect class="region" data-part="thigh" x="76" y="202" width="20" height="60" rx="10"/>
+      <rect class="region" data-part="thigh" x="104" y="202" width="20" height="60" rx="10"/>
+      <rect class="region" data-part="calf" x="78" y="270" width="16" height="80" rx="8"/>
+      <rect class="region" data-part="calf" x="106" y="270" width="16" height="80" rx="8"/>
+    </svg>
+    <div class="hint" id="part-hint">深藍色區域已建置問診流程，請點選「肩膀」開始</div>
+  </div>
+
+  <!-- 步驟 2 & 3：問診（動態產生） -->
+  <div class="card hidden" id="card-questions">
+    <h2><span class="step-num">2</span><span id="part-name"></span>問診</h2>
+    <div id="questions"></div>
+    <button class="btn-primary" onclick="analyze()">產生鑑別參考 →</button>
+  </div>
+
+  <!-- 結果 -->
+  <div class="card hidden" id="card-result">
+    <h2><span class="step-num">3</span>鑑別參考結果</h2>
+    <div id="result-summary" style="font-size:13px;color:#52606d;margin-bottom:12px;"></div>
+    <div id="result-list"></div>
+    <button class="btn-secondary" onclick="resetAll()">↺ 重新問診</button>
+  </div>
+</div>
+
+<script src="database.js"></script>
+<script>
+/* =========================================================
+   問診題庫改由 database.js 提供（單一真實來源）。
+   若醫師曾用 editor.html 編輯，會優先讀取裝置內 localStorage 的版本。
+========================================================= */
+let PARTS = window.SYMPTOM_DB || {};
+try { var _saved = localStorage.getItem('symptomDB'); if(_saved){ PARTS = JSON.parse(_saved); } } catch(e){}
+
+let currentPart = null;
+const answers = {};   // {qid: [選到的值...]}
+
+/* ===== 人體圖事件 ===== */
+function switchView(v){
+  document.getElementById('svg-front').classList.toggle('hidden', v!=='front');
+  document.getElementById('svg-back').classList.toggle('hidden', v!=='back');
+  document.getElementById('btn-front').classList.toggle('active', v==='front');
+  document.getElementById('btn-back').classList.toggle('active', v==='back');
+}
+document.querySelectorAll('.region').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    const part = el.getAttribute('data-part');
+    if(!PARTS[part]){
+      document.getElementById('part-hint').textContent = "「" + partLabel(part) + "」尚未建置問診流程（之後會陸續加入）";
+      return;
+    }
+    document.querySelectorAll('.region').forEach(r=>r.classList.remove('sel'));
+    document.querySelectorAll('[data-part="'+part+'"]').forEach(r=>r.classList.add('sel'));
+    startPart(part);
+  });
+});
+/* 依資料庫內容，自動把已建置的部位標成可點（淺藍），並更新提示 */
+(function markReady(){
+  const done = Object.keys(PARTS);
+  document.querySelectorAll('.region').forEach(r=>{
+    r.classList.toggle('ready', done.includes(r.getAttribute('data-part')));
+  });
+  const names = done.map(p=>(PARTS[p].name||p)).join('、');
+  const h = document.getElementById('part-hint');
+  if(h) h.textContent = '深藍色區域已建置問診流程：' + names + '。點選即可開始。';
+})();
+function partLabel(p){
+  const m={head:"頭部",neck:"頸部",trunk:"軀幹/胸腹",upperarm:"上臂",forearm:"前臂/手",
+    hip:"髖部",thigh:"大腿",knee:"膝蓋",leg:"小腿/腳",upperback:"上背",lowback:"下背/腰",
+    buttock:"臀部",calf:"小腿"};
+  return m[p]||p;
+}
+
+/* ===== 動態產生問診題目 ===== */
+function startPart(part){
+  currentPart = part;
+  Object.keys(answers).forEach(k=>delete answers[k]);
+  document.getElementById('part-name').textContent = PARTS[part].name;
+  const box = document.getElementById('questions');
+  box.innerHTML = '';
+  PARTS[part].questions.forEach(q=>{
+    answers[q.id] = [];
+    const div = document.createElement('div');
+    div.className = 'q-block';
+    div.innerHTML = '<div class="q-title">'+q.title+'</div>';
+    const opts = document.createElement('div');
+    opts.className = 'opts';
+    q.opts.forEach(o=>{
+      const b = document.createElement('div');
+      b.className='opt'; b.textContent=o;
+      b.onclick = ()=>toggleOpt(q,b,o);
+      opts.appendChild(b);
+    });
+    div.appendChild(opts);
+    if(q.free){
+      const inp=document.createElement('input');
+      inp.className='free-input'; inp.placeholder='其他／自行補充…';
+      inp.oninput=()=>{ answers[q.id+'_free']=inp.value; };
+      div.appendChild(inp);
+    }
+    box.appendChild(div);
+  });
+  document.getElementById('card-questions').classList.remove('hidden');
+  document.getElementById('card-result').classList.add('hidden');
+  document.getElementById('card-questions').scrollIntoView({behavior:'smooth'});
+}
+function toggleOpt(q,btn,val){
+  if(q.type==='single'){
+    btn.parentNode.querySelectorAll('.opt').forEach(x=>x.classList.remove('on'));
+    btn.classList.add('on');
+    answers[q.id]=[val];
+  } else {
+    btn.classList.toggle('on');
+    const arr=answers[q.id];
+    const i=arr.indexOf(val);
+    if(i>=0) arr.splice(i,1); else arr.push(val);
+  }
+}
+
+/* ===== 推論引擎 ===== */
+function analyze(){
+  const rules = PARTS[currentPart].rules;
+  const scored = rules.map(r=>{
+    let score=0; const why=[];
+    r.feats.forEach(([qid,val,w])=>{
+      if((answers[qid]||[]).includes(val)){ score+=w; why.push(val); }
+    });
+    return {dx:r.dx, score, why};
+  }).filter(r=>r.score>0).sort((a,b)=>b.score-a.score);
+
+  const list=document.getElementById('result-list');
+  list.innerHTML='';
+  if(scored.length===0){
+    list.innerHTML='<div class="result-item"><div class="dx">資訊不足</div><div class="why">目前選項不足以形成鑑別方向，請再補充症狀或動作。</div></div>';
+  } else {
+    scored.forEach((r,i)=>{
+      const div=document.createElement('div');
+      div.className='result-item'+(i===0?' top':'');
+      div.innerHTML='<span class="score">符合度 '+r.score+'</span><div class="dx">'+(i===0?'★ ':'')+r.dx+'</div>'+
+        '<div class="why">命中特徵：'+r.why.join('、')+'</div>';
+      list.appendChild(div);
+    });
+  }
+  // 病人主訴摘要
+  const sum=[];
+  PARTS[currentPart].questions.forEach(q=>{
+    if((answers[q.id]||[]).length) sum.push(...answers[q.id]);
+    if(answers[q.id+'_free']) sum.push(answers[q.id+'_free']);
+  });
+  document.getElementById('result-summary').innerHTML =
+    '<b>'+PARTS[currentPart].name+'</b> 主訴：' + sum.map(s=>'<span class="summary-tag">'+s+'</span>').join('');
+
+  document.getElementById('card-result').classList.remove('hidden');
+  document.getElementById('card-result').scrollIntoView({behavior:'smooth'});
+}
+function resetAll(){
+  document.querySelectorAll('.region').forEach(r=>r.classList.remove('sel'));
+  document.getElementById('card-questions').classList.add('hidden');
+  document.getElementById('card-result').classList.add('hidden');
+  document.getElementById('part-hint').textContent='深藍色區域已建置問診流程，請點選「肩膀」開始';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

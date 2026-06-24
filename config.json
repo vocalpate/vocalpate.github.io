@@ -233,6 +233,20 @@
         { "text": "EasyOCR", "color": "blue" },
         { "text": "本機工具", "color": "gray" }
       ]
+    },
+    {
+      "name": "人體症狀問診系統",
+      "desc": "點選人體部位→問診（症狀/動作/誘發）→規則庫推鑑別診斷。已建肩膀、頸部（C5–C8 神經根+紅旗），內建資料庫編輯頁。",
+      "url": "/symptom/",
+      "icon": "🩺",
+      "iconBg": "#EFF4FF",
+      "category": "診所開業",
+      "status": "dev",
+      "tags": [
+        { "text": "純 HTML", "color": "amber" },
+        { "text": "規則庫", "color": "purple" },
+        { "text": "手機優先", "color": "green" }
+      ]
     }
   ]
 }

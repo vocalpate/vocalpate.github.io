@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>資料庫編輯器 · 症狀問診系統</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+    background:#f4f6f9; color:#1f2933; line-height:1.5; }
+  header { background:#3a4a5a; color:#fff; padding:12px 16px; position:sticky; top:0; z-index:10;
+    box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  header h1 { font-size:16px; margin:0; }
+  header a { color:#cfe0f0; font-size:12px; text-decoration:none; }
+  .wrap { max-width:600px; margin:0 auto; padding:14px; padding-bottom:90px; }
+  .card { background:#fff; border-radius:10px; padding:14px; margin-bottom:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .card h2 { font-size:14px; margin:0 0 10px; color:#3a4a5a; }
+  label { font-size:12px; color:#52606d; display:block; margin:8px 0 3px; }
+  input, select, textarea { width:100%; padding:8px 10px; border:1px solid #cbd5e0;
+    border-radius:7px; font-size:14px; font-family:inherit; }
+  textarea { resize:vertical; }
+  .row { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; }
+  .row > div { flex:1; min-width:90px; }
+  button { font-family:inherit; cursor:pointer; }
+  .btn { background:#3a6ea5; color:#fff; border:none; padding:9px 14px; border-radius:7px; font-size:13px; }
+  .btn-ghost { background:#fff; color:#3a6ea5; border:1.5px solid #3a6ea5; padding:8px 12px; border-radius:7px; font-size:13px; }
+  .btn-danger { background:#fff; color:#c0392b; border:1px solid #e3b0aa; padding:5px 9px; border-radius:6px; font-size:12px; }
+  .btn-sm { background:#eef2f6; color:#3a4a5a; border:1px solid #d0d9e2; padding:6px 10px; border-radius:6px; font-size:12px; }
+  .qbox, .rbox { border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:10px; background:#fafbfc; }
+  .qbox .hd, .rbox .hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .qbox .hd b, .rbox .hd b { font-size:13px; color:#3a4a5a; }
+  .cond { display:flex; gap:6px; align-items:center; margin-bottom:6px; }
+  .cond select { flex:2; } .cond input { flex:.7; min-width:54px; }
+  .cond .x { color:#c0392b; font-size:18px; padding:0 4px; cursor:pointer; }
+  .toolbar { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e2e8f0;
+    padding:10px 14px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; z-index:20; }
+  .hint { font-size:11px; color:#7b8794; margin-top:4px; }
+  .toast { position:fixed; bottom:70px; left:50%; transform:translateX(-50%); background:#2d3a47; color:#fff;
+    padding:8px 16px; border-radius:20px; font-size:13px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:30; }
+  .toast.show { opacity:1; }
+  .export-area { width:100%; height:160px; font-family:monospace; font-size:11px; margin-top:8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚙️ 資料庫編輯器</h1>
+  <a href="index.html">← 回到問診畫面</a>
+</header>
+
+<div class="wrap">
+  <!-- 部位選擇 -->
+  <div class="card">
+    <h2>選擇 / 新增部位</h2>
+    <div class="row">
+      <div>
+        <label>目前編輯的部位</label>
+        <select id="part-select" onchange="selectPart(this.value)"></select>
+      </div>
+      <button class="btn-sm" onclick="addPart()">＋ 新增部位</button>
+    </div>
+    <div id="part-meta"></div>
+  </div>
+
+  <!-- 問診題目 -->
+  <div class="card" id="card-q">
+    <h2>問診題目</h2>
+    <div id="questions"></div>
+    <button class="btn-ghost" onclick="addQuestion()">＋ 新增題目</button>
+  </div>
+
+  <!-- 鑑別規則 -->
+  <div class="card" id="card-r">
+    <h2>鑑別診斷與規則</h2>
+    <p class="hint">每條規則 = 一個診斷 + 若干「條件」。病人某題選到該選項時，此診斷加上對應分數；分數越高越懷疑。</p>
+    <div id="rules"></div>
+    <button class="btn-ghost" onclick="addRule()">＋ 新增診斷規則</button>
+  </div>
+
+  <!-- 匯出 -->
+  <div class="card">
+    <h2>匯出資料庫檔（database.js）</h2>
+    <p class="hint">「儲存到此裝置」只存在這支手機/瀏覽器。要讓所有裝置都更新，請按「產生 database.js」，把內容交給 Claude 寫入檔案，或自行覆蓋專案中的 database.js。</p>
+    <button class="btn-sm" onclick="genExport()">產生 database.js 內容</button>
+    <button class="btn-sm" onclick="copyExport()">複製</button>
+    <button class="btn-sm" onclick="downloadExport()">下載檔案</button>
+    <textarea id="export" class="export-area" placeholder="按上方按鈕產生內容…" readonly></textarea>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button class="btn" onclick="saveLocal()">💾 儲存到此裝置</button>
+  <button class="btn-ghost" onclick="location.href='index.html'">▶ 預覽問診</button>
+  <button class="btn-ghost" onclick="resetToFile()">↺ 還原為檔案版本</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="database.js"></script>
+<script>
+/* 可用的人體區塊 key（須對應 index.html 的人體圖 data-part，新部位才點得到） */
+const BODY_PARTS = {
+  head:"頭部", neck:"頸部", trunk:"軀幹/胸腹", shoulder:"肩膀", upperarm:"上臂",
+  forearm:"前臂/手", hip:"髖部", thigh:"大腿", knee:"膝蓋", leg:"小腿/腳",
+  upperback:"上背", lowback:"下背/腰", buttock:"臀部", calf:"小腿"
+};
+
+let db = {};
+let cur = null;  // 目前編輯的部位 key
+
+/* ===== 載入：優先用裝置內已存的，否則用檔案 database.js ===== */
+function loadDB(){
+  let saved = null;
+  try { saved = localStorage.getItem('symptomDB'); } catch(e){}
+  db = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(window.SYMPTOM_DB || {}));
+  refreshPartSelect();
+  const keys = Object.keys(db);
+  selectPart(keys.length ? keys[0] : null);
+}
+function refreshPartSelect(){
+  const sel = document.getElementById('part-select');
+  sel.innerHTML = '';
+  Object.keys(db).forEach(k=>{
+    const o = document.createElement('option');
+    o.value = k; o.textContent = (db[k].name||k) + '（'+k+'）';
+    sel.appendChild(o);
+  });
+}
+
+/* ===== 部位 ===== */
+function selectPart(k){
+  cur = k;
+  if(k){ document.getElementById('part-select').value = k; }
+  renderPartMeta(); renderQuestions(); renderRules();
+}
+function renderPartMeta(){
+  const box = document.getElementById('part-meta');
+  if(!cur){ box.innerHTML = '<p class="hint">尚無部位，請按「新增部位」。</p>'; return; }
+  box.innerHTML =
+    '<label>部位顯示名稱</label>'+
+    '<input value="'+esc(db[cur].name||'')+'" onchange="db[cur].name=this.value;refreshPartSelect();document.getElementById(\'part-select\').value=cur;">'+
+    '<label>對應人體區塊（key：'+cur+'）</label>'+
+    '<p class="hint">此部位對應人體圖的「'+(BODY_PARTS[cur]||cur)+'」。要改對應區塊需重建部位。</p>'+
+    '<button class="btn-danger" onclick="delPart()">刪除此部位</button>';
+}
+function addPart(){
+  const used = Object.keys(db);
+  const avail = Object.keys(BODY_PARTS).filter(k=>!used.includes(k));
+  if(!avail.length){ toast('所有人體區塊都已建立'); return; }
+  const list = avail.map(k=>k+'＝'+BODY_PARTS[k]).join('\n');
+  const pick = prompt('輸入要新增的人體區塊 key：\n\n可用：\n'+list);
+  if(!pick) return;
+  const key = pick.trim();
+  if(!BODY_PARTS[key]){ toast('key 不在可用清單內'); return; }
+  if(db[key]){ toast('該部位已存在'); return; }
+  db[key] = { name: BODY_PARTS[key], questions: [], rules: [] };
+  refreshPartSelect(); selectPart(key); toast('已新增：'+BODY_PARTS[key]);
+}
+function delPart(){
+  if(!cur) return;
+  if(!confirm('確定刪除部位「'+(db[cur].name||cur)+'」及其所有題目與規則？')) return;
+  delete db[cur]; refreshPartSelect();
+  selectPart(Object.keys(db)[0]||null);
+}
+
+/* ===== 題目 ===== */
+function renderQuestions(){
+  const box = document.getElementById('questions');
+  box.innerHTML = '';
+  if(!cur){ return; }
+  db[cur].questions.forEach((q,i)=>{
+    const d = document.createElement('div'); d.className='qbox';
+    d.innerHTML =
+      '<div class="hd"><b>題目 '+(i+1)+'</b><button class="btn-danger" onclick="delQuestion('+i+')">刪除</button></div>'+
+      '<div class="row">'+
+        '<div><label>題目 ID（英文，規則會用到）</label><input value="'+esc(q.id)+'" onchange="setQ('+i+',\'id\',this.value)"></div>'+
+        '<div><label>類型</label><select onchange="setQ('+i+',\'type\',this.value)">'+
+          '<option value="single"'+(q.type==='single'?' selected':'')+'>單選</option>'+
+          '<option value="multi"'+(q.type==='multi'?' selected':'')+'>複選</option></select></div>'+
+      '</div>'+
+      '<label>題目文字</label><input value="'+esc(q.title)+'" onchange="setQ('+i+',\'title\',this.value)">'+
+      '<label>選項（一行一個）</label><textarea rows="'+Math.max(3,q.opts.length)+'" onchange="setQ('+i+',\'opts\',this.value)">'+esc(q.opts.join('\n'))+'</textarea>'+
+      '<label style="display:inline-block;margin-top:6px;"><input type="checkbox" style="width:auto;" '+(q.free?'checked':'')+' onchange="setQ('+i+',\'free\',this.checked)"> 允許自行填寫</label>';
+    box.appendChild(d);
+  });
+}
+function setQ(i,field,val){
+  const q = db[cur].questions[i];
+  if(field==='opts'){ q.opts = val.split('\n').map(s=>s.trim()).filter(Boolean); renderQuestions(); renderRules(); }
+  else { q[field]=val; if(field==='id'||field==='type') renderRules(); }
+}
+function addQuestion(){
+  if(!cur){ toast('請先選擇或新增部位'); return; }
+  db[cur].questions.push({ id:'q'+(db[cur].questions.length+1), title:'新題目', type:'single', free:false, opts:['選項一','選項二'] });
+  renderQuestions();
+}
+function delQuestion(i){ db[cur].questions.splice(i,1); renderQuestions(); renderRules(); }
+
+/* ===== 規則 ===== */
+function renderRules(){
+  const box = document.getElementById('rules');
+  box.innerHTML = '';
+  if(!cur){ return; }
+  db[cur].rules.forEach((r,ri)=>{
+    const d = document.createElement('div'); d.className='rbox';
+    let html = '<div class="hd"><b>診斷 '+(ri+1)+'</b><button class="btn-danger" onclick="delRule('+ri+')">刪除</button></div>'+
+      '<label>診斷名稱</label><input value="'+esc(r.dx)+'" onchange="db[cur].rules['+ri+'].dx=this.value">'+
+      '<label>條件（題目 + 選項 + 分數）</label>';
+    r.feats.forEach((f,fi)=>{ html += condRow(ri,fi,f); });
+    html += '<button class="btn-sm" style="margin-top:4px;" onclick="addCond('+ri+')">＋ 條件</button>';
+    d.innerHTML = html;
+    box.appendChild(d);
+  });
+}
+function condRow(ri,fi,f){
+  const qs = db[cur].questions;
+  let qOpts = qs.map(q=>'<option value="'+esc(q.id)+'"'+(q.id===f[0]?' selected':'')+'>'+esc(q.title||q.id)+'</option>').join('');
+  const q = qs.find(x=>x.id===f[0]);
+  let oOpts = (q?q.opts:[]).map(o=>'<option value="'+esc(o)+'"'+(o===f[1]?' selected':'')+'>'+esc(o)+'</option>').join('');
+  return '<div class="cond">'+
+    '<select onchange="setCond('+ri+','+fi+',0,this.value)">'+qOpts+'</select>'+
+    '<select onchange="setCond('+ri+','+fi+',1,this.value)">'+oOpts+'</select>'+
+    '<input type="number" min="1" value="'+(f[2]||1)+'" onchange="setCond('+ri+','+fi+',2,this.value)">'+
+    '<span class="x" onclick="delCond('+ri+','+fi+')">✕</span></div>';
+}
+function setCond(ri,fi,idx,val){
+  if(idx===2) val = parseInt(val)||1;
+  db[cur].rules[ri].feats[fi][idx] = val;
+  if(idx===0){ // 換題目→選項清單要重整
+    const q = db[cur].questions.find(x=>x.id===val);
+    db[cur].rules[ri].feats[fi][1] = q && q.opts[0] ? q.opts[0] : '';
+    renderRules();
+  }
+}
+function addCond(ri){
+  const q0 = db[cur].questions[0];
+  db[cur].rules[ri].feats.push([ q0?q0.id:'', q0&&q0.opts[0]?q0.opts[0]:'', 1 ]);
+  renderRules();
+}
+function delCond(ri,fi){ db[cur].rules[ri].feats.splice(fi,1); renderRules(); }
+function addRule(){
+  if(!cur){ toast('請先選擇或新增部位'); return; }
+  db[cur].rules.push({ dx:'新診斷', feats:[] });
+  renderRules();
+}
+function delRule(ri){ db[cur].rules.splice(ri,1); renderRules(); }
+
+/* ===== 儲存 / 匯出 ===== */
+function saveLocal(){
+  try { localStorage.setItem('symptomDB', JSON.stringify(db)); toast('已儲存到此裝置'); }
+  catch(e){ toast('儲存失敗：'+e.message); }
+}
+function resetToFile(){
+  if(!confirm('放棄此裝置的修改，還原成 database.js 檔案版本？')) return;
+  try { localStorage.removeItem('symptomDB'); } catch(e){}
+  loadDB(); toast('已還原為檔案版本');
+}
+function buildFileText(){
+  return '/* 症狀問診資料庫（由 editor.html 產生，'+new Date().toLocaleString('zh-TW')+'） */\n'+
+    'window.SYMPTOM_DB = '+JSON.stringify(db,null,2)+';\n';
+}
+function genExport(){ document.getElementById('export').value = buildFileText(); toast('已產生，可複製或下載'); }
+function copyExport(){
+  genExport();
+  const t=document.getElementById('export'); t.removeAttribute('readonly'); t.select();
+  try{ document.execCommand('copy'); toast('已複製'); }catch(e){ navigator.clipboard&&navigator.clipboard.writeText(t.value); }
+  t.setAttribute('readonly','');
+}
+function downloadExport(){
+  const blob = new Blob([buildFileText()],{type:'text/javascript'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'database.js'; a.click();
+  toast('已下載 database.js');
+}
+
+/* ===== 小工具 ===== */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+let toastT;
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); }
+
+loadDB();
+</script>
+</body>
+</html>
