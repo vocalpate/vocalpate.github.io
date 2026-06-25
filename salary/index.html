@@ -575,6 +575,7 @@ function calculateLocal(doctor, yearMonth) {
       totalDays, totalPatients, totalSelfPayCount, totalMultiHousehold,
       totalSalary,
       totalTrips, rideTrips, bikeTrips, rideFare, bikeFare, totalCarFare,
+      rideRatioPct: Math.round(rideRatio * 100), bikeRatioPct: 100 - Math.round(rideRatio * 100),
       grandTotal: totalSalary + totalCarFare
     }
   };
@@ -616,7 +617,7 @@ function renderResult(r) {
     '<div class="summary-row"><span>總人數（含自費 ' + (s.totalSelfPayCount || 0) + ' 人）</span><span>' + s.totalPatients + ' 人</span></div>' +
     '<div class="summary-row"><span>一戶多案扣除</span><span>-' + s.totalMultiHousehold + ' 趟</span></div>' +
     '<div class="summary-row"><span>看診薪資</span><span>$' + s.totalSalary.toLocaleString() + '</span></div>' +
-    '<div class="summary-row"><span>車資（搭車 ' + s.rideTrips + ' 趟×$' + s.rideFare + ' + 自騎 ' + s.bikeTrips + ' 趟×$' + s.bikeFare + '）</span><span>$' + s.totalCarFare.toLocaleString() + '</span></div>' +
+    '<div class="summary-row"><span>車資（搭車 ' + s.rideRatioPct + '% · ' + s.rideTrips + ' 趟×$' + s.rideFare + ' + 自騎 ' + s.bikeRatioPct + '% · ' + s.bikeTrips + ' 趟×$' + s.bikeFare + '）</span><span>$' + s.totalCarFare.toLocaleString() + '</span></div>' +
     '<div class="summary-row total"><span>合計</span><span>$' + s.grandTotal.toLocaleString() + '</span></div>' +
     '</div>';
 
