@@ -247,6 +247,34 @@
         { "text": "規則庫", "color": "purple" },
         { "text": "手機優先", "color": "green" }
       ]
+    },
+    {
+      "name": "實證醫學文獻查詢",
+      "desc": "Claude Code /ebm 指令：臨床問題→Europe PMC/PubMed 免費 API 分層檢索→含引用與證據等級的中文答案。",
+      "url": "#",
+      "icon": "📚",
+      "iconBg": "#F5F3FF",
+      "category": "AI 工具",
+      "status": "dev",
+      "tags": [
+        { "text": "Europe PMC", "color": "blue" },
+        { "text": "PubMed", "color": "purple" },
+        { "text": "零成本", "color": "green" }
+      ]
+    },
+    {
+      "name": "骨骼肌肉超音波導引",
+      "desc": "手機選部位→挑主題→看小針刀／超音波導引指引。私人 App（僅本人可開），內容依部位與常見度分層。",
+      "url": "https://script.google.com/macros/s/AKfycbxyRJzLIgnmXFEPg0y9GB31rYQXTNURRjQO0xxSzNEGBvfbCW3C2kOv7i7xQsjOsdmv4w/exec",
+      "icon": "🦴",
+      "iconBg": "#EFF6F2",
+      "category": "診所開業",
+      "status": "dev",
+      "tags": [
+        { "text": "私人", "color": "gray" },
+        { "text": "Apps Script", "color": "purple" },
+        { "text": "手機優先", "color": "green" }
+      ]
     }
   ]
 }
