@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>診所助理排班系統</title>
+<style>
+/* ===================== 主題變數（方便日後換色/擴充） ===================== */
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --ink:#1f2d2b; --muted:#65787a;
+  --line:#e2e8ea; --teal:#2E8B8B; --teal-d:#22706f; --teal-l:#e6f2f1;
+  --gold:#C99A3A; --red:#c0433f; --red-l:#fdecea; --amber:#b8791f; --amber-l:#fdf3e2;
+  --green:#2f8f57; --green-l:#e7f4ec; --radius:14px; --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#141a1a; --card:#1e2626; --ink:#e8eeee; --muted:#9fb0b0; --line:#31403f;
+    --teal:#3fb0af; --teal-d:#5cc7c6; --teal-l:#1c2e2e; --gold:#d9b25f; --red:#e8756f;
+    --red-l:#3a2220; --amber:#e0a94a; --amber-l:#352a18; --green:#5fc084; --green-l:#1d2f24; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.5;padding-bottom:80px}
+h1,h2,h3{margin:0}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit;font-size:15px}
+.wrap{max-width:960px;margin:0 auto;padding:0 12px}
+
+/* 頂部 */
+header{background:linear-gradient(135deg,var(--teal-d),var(--teal));color:#fff;padding:14px 0 12px}
+header .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header .logo{font-size:22px}
+header h1{font-size:18px;font-weight:700;letter-spacing:.5px}
+header .cname{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;opacity:.95}
+header .cname input{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;padding:5px 8px;width:140px}
+header .cname input::placeholder{color:rgba(255,255,255,.7)}
+
+/* 分頁列 */
+nav.tabs{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);display:flex;overflow-x:auto;box-shadow:var(--shadow)}
+nav.tabs button{flex:0 0 auto;background:none;border:none;padding:12px 14px;font-size:14px;color:var(--muted);font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs button.on{color:var(--teal);border-bottom-color:var(--teal)}
+
+section.panel{display:none;padding:14px 0 40px}
+section.panel.on{display:block}
+
+/* 卡片 */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;color:var(--teal-d);margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.card .hint{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.sub{font-size:12px;color:var(--muted)}
+
+/* 表單元件 */
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:12.5px;color:var(--muted);font-weight:600}
+.field input,.field select{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:9px 10px;width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.field{flex:1;min-width:120px}
+.inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.btn{border:1px solid var(--teal);background:var(--teal);color:#fff;border-radius:10px;padding:9px 14px;font-weight:600;font-size:14px}
+.btn.ghost{background:transparent;color:var(--teal)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn.gray{border-color:var(--line);background:var(--card);color:var(--muted)}
+.btn.danger{border-color:var(--red);background:transparent;color:var(--red)}
+.btn.block{width:100%;display:block;text-align:center}
+.btn:active{transform:translateY(1px)}
+
+/* 時段：星期設定 */
+.daygrid{display:grid;grid-template-columns:1fr;gap:8px}
+.dayrow{border:1px solid var(--line);border-radius:11px;padding:10px}
+.dayrow.closed{opacity:.55}
+.dayrow .dhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.dayrow .dhead b{font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;user-select:none}
+.chip.on{border-color:var(--teal);background:var(--teal-l);color:var(--teal-d)}
+
+/* switch */
+.sw{position:relative;width:42px;height:24px;flex:0 0 auto}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw span{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:.2s}
+.sw span::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.sw input:checked+span{background:var(--teal)}
+.sw input:checked+span::before{transform:translateX(18px)}
+
+/* 助理卡片 */
+.staffcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;position:relative}
+.staffcard .tophue{position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:12px 0 0 12px}
+.staffcard .sc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-left:6px}
+.badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px}
+.badge.full{background:var(--teal-l);color:var(--teal-d)}
+.badge.part{background:var(--amber-l);color:var(--amber)}
+
+/* 排班表 */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.rtable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px}
+table.roster{border-collapse:collapse;width:100%;min-width:520px}
+table.roster th,table.roster td{border:1px solid var(--line);padding:0;text-align:center;vertical-align:middle}
+table.roster thead th{background:var(--teal-l);color:var(--teal-d);font-size:13px;padding:8px 4px;position:sticky;top:0}
+table.roster th.sesscol{background:var(--card);color:var(--ink);text-align:left;padding:8px 10px;min-width:96px;position:sticky;left:0;z-index:2}
+table.roster thead th.corner{position:sticky;left:0;z-index:3;background:var(--teal-l)}
+.cell{min-height:52px;padding:5px;display:flex;flex-direction:column;gap:3px;align-items:stretch;justify-content:center;cursor:pointer}
+.cell.closed{background:repeating-linear-gradient(45deg,transparent,transparent 6px,var(--line) 6px,var(--line) 7px);cursor:default}
+.cell .miss{color:var(--red);font-size:12px;font-weight:700}
+.stf{font-size:12px;font-weight:700;color:#fff;border-radius:6px;padding:3px 6px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sesscol small{display:block;color:var(--muted);font-weight:500;font-size:11px}
+
+/* 成本/統計 */
+.stat{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.stat:last-child{border-bottom:none}
+.stat b{font-weight:700}
+.total{font-size:20px;font-weight:800;color:var(--teal-d)}
+.warnbox{border-radius:11px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+.warnbox.ok{background:var(--green-l);color:var(--green);border:1px solid var(--green)}
+.warn{display:flex;gap:8px;align-items:flex-start;background:var(--red-l);border:1px solid var(--red);color:var(--red);border-radius:10px;padding:8px 10px;margin-bottom:7px;font-size:13px}
+.warn.soft{background:var(--amber-l);border-color:var(--amber);color:var(--amber)}
+.warn .ic{flex:0 0 auto}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--teal-l);color:var(--teal-d);margin-left:6px}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.modal-bg.on{display:flex}
+.modal{background:var(--card);width:100%;max-width:460px;border-radius:18px 18px 0 0;padding:16px;max-height:82vh;overflow:auto;animation:up .2s ease}
+@media(min-width:560px){.modal-bg{align-items:center}.modal{border-radius:18px}}
+@keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
+.modal h3{font-size:16px;margin-bottom:4px}
+.pick{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:11px;padding:10px;margin:8px 0;font-weight:600}
+.pick.sel{border-color:var(--teal);background:var(--teal-l)}
+.pick .dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto}
+.pick .na{margin-left:auto;font-size:11.5px;color:var(--amber);font-weight:700}
+.foot{position:sticky;bottom:0;background:var(--card);padding-top:10px;display:flex;gap:8px}
+
+.tiny{font-size:11.5px;color:var(--muted)}
+.mt{margin-top:10px}
+.disclaimer{font-size:11.5px;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:6px}
+.addbtn{border:1px dashed var(--teal);color:var(--teal);background:transparent;border-radius:11px;padding:11px;width:100%;font-weight:700;font-size:14px}
+hr.sep{border:none;border-top:1px solid var(--line);margin:12px 0}
+/* 列印：只留班表 */
+.printonly{display:none}
+@media print{
+  header,nav.tabs,.noprint,#rosterMini,.hint,.disclaimer{display:none!important}
+  body{padding:0;background:#fff;color:#000}
+  section.panel{display:none!important} #panel-roster{display:block!important}
+  .card{border:none;box-shadow:none;padding:0;margin:0}
+  .printonly{display:block;margin-bottom:12px}
+  .rtable-wrap{border:1px solid #999;overflow:visible} table.roster{min-width:0;width:100%}
+  .stf,table.roster thead th,table.roster th.sesscol,.cell.closed{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #rosterLegend{margin-top:10px;color:#000}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="logo">🗓️</span>
+    <h1>診所助理排班系統</h1>
+    <span class="cname">診所：<input id="clinicName" placeholder="診所名稱"></span>
+  </div>
+</header>
+
+<nav class="tabs wrap" style="max-width:960px">
+  <button data-tab="clinic" class="on">🕐 看診時段</button>
+  <button data-tab="staff">👥 助理設定</button>
+  <button data-tab="roster">📅 排班表</button>
+  <button data-tab="cost">💰 成本／檢查</button>
+  <button data-tab="settings">⚙️ 設定</button>
+</nav>
+
+<div class="wrap">
+
+  <!-- ============ 分頁1：看診時段 ============ -->
+  <section class="panel on" id="panel-clinic">
+    <div class="card">
+      <h2>🕐 班段定義</h2>
+      <p class="hint">先定義有哪些「診次」與助理的到勤時間（含提早準備／收尾）。可自由增減，不限三診。</p>
+      <div id="sessionList"></div>
+      <button class="addbtn mt" onclick="addSession()">＋ 新增診次</button>
+    </div>
+    <div class="card">
+      <h2>📆 每週營業設定</h2>
+      <p class="hint">勾選每天要開哪些診次。某天不開就關掉；週六只開早診也 OK。</p>
+      <div class="daygrid" id="weekGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 分頁2：助理設定 ============ -->
+  <section class="panel" id="panel-staff">
+    <div class="card">
+      <h2>👥 助理名單</h2>
+      <p class="hint">設定每位助理的身分、薪資與限制（一天最多幾診、一週最多幾天、能不能加班）。</p>
+      <div id="staffList"></div>
+      <button class="addbtn mt" onclick="addStaff()">＋ 新增助理</button>
+    </div>
+  </section>
+
+  <!-- ============ 分頁3：排班表 ============ -->
+  <section class="panel" id="panel-roster">
+    <div class="card">
+      <div id="printTitle" class="printonly"></div>
+      <div class="toolbar noprint">
+        <button class="btn sm" onclick="autoFill()">✨ 一鍵試排</button>
+        <button class="btn sm gray" onclick="clearRoster()">清空排班</button>
+        <button class="btn sm ghost" onclick="printRoster()">🖨️ 列印／存 PDF</button>
+      </div>
+      <div class="inline noprint" style="font-size:13px;margin-bottom:8px">複製
+        <select id="copySrc" style="padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)"></select>
+        的排班到其他營業日
+        <button class="btn sm gray" onclick="copyDay()">套用</button>
+      </div>
+      <p class="hint">點任一格子指派助理。「試排」會依你設定的限制自動排一版，再自己微調。</p>
+      <div class="rtable-wrap"><table class="roster" id="rosterTable"></table></div>
+      <div id="rosterLegend" class="inline mt tiny"></div>
+      <div id="rosterMini" class="mt"></div>
+    </div>
+  </section>
+
+  <!-- ============ 分頁4：成本／檢查 ============ -->
+  <section class="panel" id="panel-cost">
+    <div class="card">
+      <h2>🚦 勞基法檢查</h2>
+      <div id="warnArea"></div>
+    </div>
+    <div class="card">
+      <h2>💰 人事成本試算</h2>
+      <div id="costArea"></div>
+      <div class="disclaimer">⚠️ 本試算為估算參考，非正式薪資／法律意見。基本工資、勞健保級距每年調整，請以勞動部公告與記帳士核算為準。加班費採「單日超 8 小時」估算（前 2 小時 ×<span id="dc-ot1"></span>、之後 ×<span id="dc-ot2"></span>）。</div>
+    </div>
+  </section>
+
+  <!-- ============ 分頁5：設定 ============ -->
+  <section class="panel" id="panel-settings">
+    <div class="card">
+      <h2>🗓️ 工時制度</h2>
+      <p class="hint">切換制度會自動調整「單日／單週工時上限」，讓你比較同一份班表在不同制度下的成本。</p>
+      <div class="row">
+        <div class="field"><label>工時制度</label><select id="p-system">
+          <option value="standard">一例一休（預設）</option>
+          <option value="flex2">2週變形工時</option>
+          <option value="flex4">4週變形工時</option>
+        </select></div>
+        <div class="field"><label>加班處理方式</label><select id="p-otMode">
+          <option value="pay">給加班費</option>
+          <option value="comp">換補休（1:1）</option>
+        </select></div>
+      </div>
+      <p id="systemNote" class="tiny"></p>
+      <p id="otModeNote" class="tiny"></p>
+    </div>
+    <div class="card">
+      <h2>⚙️ 勞基法參數（每年檢查一次）</h2>
+      <p class="hint">法規數字變動時在這裡改，全站計算即時套用。</p>
+      <div class="row">
+        <div class="field"><label>每日正常工時上限</label><input type="number" id="p-dailyNormal" step="0.5"></div>
+        <div class="field"><label>每週正常工時上限</label><input type="number" id="p-weeklyNormal" step="1"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>每月加班上限(hr)</label><input type="number" id="p-monthlyOtCap" step="1"></div>
+        <div class="field"><label>每週最少休假(天)</label><input type="number" id="p-minRestDays" step="1"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>加班前2hr倍率</label><input type="number" id="p-ot1" step="0.01"></div>
+        <div class="field"><label>加班2hr後倍率</label><input type="number" id="p-ot2" step="0.01"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>基本工資時薪(參考)</label><input type="number" id="p-minWage" step="1"></div>
+        <div class="field"><label>雇主負擔加成(%)</label><input type="number" id="p-burden" step="1"></div>
+      </div>
+      <p class="tiny">雇主負擔加成＝勞保＋健保＋勞退雇主提撥概估（約 15～17%）。</p>
+    </div>
+    <div class="card">
+      <h2>💾 資料備份／還原</h2>
+      <p class="hint">資料只存在這台裝置的瀏覽器。可匯出成檔案備份、或搬到別台。</p>
+      <div class="toolbar">
+        <button class="btn sm" onclick="exportJSON()">⬇️ 匯出備份</button>
+        <button class="btn sm ghost" onclick="document.getElementById('importFile').click()">⬆️ 匯入</button>
+        <button class="btn sm gray" onclick="loadDemo()">載入範例</button>
+        <button class="btn sm danger" onclick="wipe()">清除全部</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(event)">
+      <p class="tiny mt">版本：v0.1 MVP　·　資料鍵：<code>clinic_roster_v1</code></p>
+    </div>
+  </section>
+
+</div>
+
+<!-- 指派 Modal -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modalTitle">指派助理</h3>
+    <p class="sub" id="modalSub"></p>
+    <div id="modalPicks" class="mt"></div>
+    <div class="foot"><button class="btn block" onclick="closeModal()">完成</button></div>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   診所助理排班系統  ——  單頁 App（零後端、localStorage）
+   架構分層（方便擴充）：
+     1) 常數與預設    2) 狀態存取/版本遷移   3) 工具函式
+     4) 規則引擎(計算工時/成本/合法性)   5) 自動排班引擎
+     6) 各分頁渲染   7) 事件處理   8) 初始化
+   ======================================================================= */
+
+/* ========== 1) 常數與預設 ========== */
+const STORE_KEY = 'clinic_roster_v1';
+const DAYS = [['mon','週一'],['tue','週二'],['wed','週三'],['thu','週四'],['fri','週五'],['sat','週六'],['sun','週日']];
+const OT_POLICIES = [['none','不加班'],['allow','可加班'],['flex','可配合']];
+const STAFF_COLORS = ['#2E8B8B','#C99A3A','#4a72c0','#9a5bbf','#3f9e6b','#c0653f','#c04f7a','#5a8f2f'];
+
+// 勞基法/薪資參數預設（可在設定頁調整）
+const DEFAULT_RULES = {
+  system:'standard',      // standard=一例一休 / flex2=2週變形 / flex4=4週變形
+  otMode:'pay',           // pay=給加班費 / comp=換補休(1:1)
+  dailyNormal:8, weeklyNormal:40, monthlyOtCap:46, minRestDays:2,
+  ot1:1.34, ot2:1.67, minWage:196, burden:16, weeksPerMonth:4.333
+};
+// 工時制度預設值（切換時自動套用單日/單週上限）
+const SYSTEMS = {
+  standard:{name:'一例一休', dailyNormal:8,  weeklyNormal:40, minRestDays:2,
+    note:'單日超 8hr 即加班、每週正常 40hr、每週至少休 2 天。免任何程序，人人可用。'},
+  flex2:{name:'2週變形',   dailyNormal:10, weeklyNormal:48, minRestDays:2,
+    note:'單日可到 10hr 不算加班、每週上限 48hr、2週至少2例假(休假可挪移)。任何診所可用，需勞資會議同意。'},
+  flex4:{name:'4週變形',   dailyNormal:10, weeklyNormal:48, minRestDays:2,
+    note:'單日可到 10hr、彈性更大、每2週至少2例假。限醫療保健等「指定行業」，需先確認診所是否適用。'}
+};
+
+// 範例資料：對應我們討論的「5 天門診、A 全職顧白天兩診、B 兼職顧晚診」
+function demoState(){
+  return {
+    version:1,
+    clinicName:'云初中醫診所',
+    rules:{...DEFAULT_RULES},
+    sessions:[
+      {id:'am', name:'早診', cStart:'09:00', cEnd:'12:00', sStart:'08:45', sEnd:'12:15', minStaff:1},
+      {id:'pm', name:'午診', cStart:'15:00', cEnd:'18:00', sStart:'14:45', sEnd:'18:00', minStaff:1},
+      {id:'ev', name:'晚診', cStart:'18:30', cEnd:'20:30', sStart:'18:15', sEnd:'20:45', minStaff:1},
+    ],
+    week:{
+      mon:{open:true,sessions:['am','pm','ev']}, tue:{open:true,sessions:['am','pm','ev']},
+      wed:{open:true,sessions:['am','pm','ev']}, thu:{open:true,sessions:['am','pm','ev']},
+      fri:{open:true,sessions:['am','pm','ev']}, sat:{open:false,sessions:[]}, sun:{open:false,sessions:[]}
+    },
+    staff:[
+      {id:'a', name:'助理A', type:'full', wageType:'monthly', wage:34000, maxSessDay:2, maxDays:5, ot:'flex', color:STAFF_COLORS[0]},
+      {id:'b', name:'助理B', type:'part', wageType:'hourly', wage:200, maxSessDay:2, maxDays:5, ot:'flex', color:STAFF_COLORS[1]},
+    ],
+    // roster[day][sessionId] = [staffId,...]
+    roster:(function(){
+      const r={}; DAYS.forEach(([d])=>r[d]={});
+      ['mon','tue','wed','thu','fri'].forEach(d=>{ r[d]={am:['a'],pm:['a'],ev:['b']}; });
+      return r;
+    })()
+  };
+}
+
+/* ========== 2) 狀態存取 / 版本遷移 ========== */
+let state = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return demoState();
+    return migrate(JSON.parse(raw));
+  }catch(e){ console.warn('load fail',e); return demoState(); }
+}
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){ console.warn('save fail',e); } }
+
+// 版本遷移：日後改結構時在此補預設，確保舊資料相容
+function migrate(s){
+  s.version = s.version || 1;
+  s.rules = Object.assign({}, DEFAULT_RULES, s.rules||{});
+  s.sessions = (s.sessions||[]).map(x=>Object.assign({minStaff:1},x));
+  DAYS.forEach(([d])=>{ s.week[d] = s.week[d] || {open:false,sessions:[]}; s.roster = s.roster||{}; s.roster[d]=s.roster[d]||{}; });
+  s.staff = (s.staff||[]).map((x,i)=>Object.assign({maxSessDay:2,maxDays:5,ot:'flex',availMode:'all',avail:{},color:STAFF_COLORS[i%STAFF_COLORS.length]},x));
+  return s;
+}
+
+/* ========== 3) 工具函式 ========== */
+const $ = id => document.getElementById(id);
+function uid(p){ return p+Math.random().toString(36).slice(2,7); }
+function t2m(t){ if(!t) return 0; const [h,m]=t.split(':').map(Number); return h*60+m; }
+function dur(a,b){ return Math.max(0,(t2m(b)-t2m(a)))/60; } // 小時
+function sessById(id){ return state.sessions.find(s=>s.id===id); }
+function staffById(id){ return state.staff.find(s=>s.id===id); }
+function sessHours(id){ const s=sessById(id); return s?dur(s.sStart,s.sEnd):0; }
+// 助理是否可上該時段（availMode='all' 全可；'custom' 只看 avail[day] 清單）
+function isAvail(st,day,sid){ if(!st) return false; if((st.availMode||'all')==='all') return true; return ((st.avail||{})[day]||[]).includes(sid); }
+function money(n){ return 'NT$'+Math.round(n).toLocaleString('en-US'); }
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function openDays(){ return DAYS.filter(([d])=>state.week[d].open); }
+
+/* ========== 4) 規則引擎：計算工時 / 加班 / 成本 / 合法性 ========== */
+function compute(){
+  const R = state.rules, wpm = R.weeksPerMonth;
+  const per = {}; // 每位助理統計
+  state.staff.forEach(st=>{
+    per[st.id] = {staff:st, dayHours:{}, daysWorked:0, weekHours:0, weekNormal:0, weekOT:0,
+                  monthHours:0, monthOT:0, restDays:0, otPayWeek:0, warns:[]};
+  });
+
+  // 逐日累計每位助理工時
+  DAYS.forEach(([d])=>{
+    if(!state.week[d].open) return;
+    const perStaffDay = {}; // staffId -> {hours, sessCount}
+    state.week[d].sessions.forEach(sid=>{
+      const assigned = (state.roster[d] && state.roster[d][sid]) || [];
+      assigned.forEach(aid=>{
+        if(!per[aid]) return;
+        perStaffDay[aid] = perStaffDay[aid] || {hours:0,sess:0};
+        perStaffDay[aid].hours += sessHours(sid);
+        perStaffDay[aid].sess += 1;
+      });
+    });
+    Object.keys(perStaffDay).forEach(aid=>{
+      const p = per[aid], dh = perStaffDay[aid].hours;
+      p.dayHours[d] = {hours:dh, sess:perStaffDay[aid].sess};
+      p.daysWorked += 1;
+      p.weekHours += dh;
+      const normal = Math.min(dh, R.dailyNormal);
+      const ot = Math.max(0, dh - R.dailyNormal);
+      p.weekNormal += normal; p.weekOT += ot;
+      // 當日加班費倍率分段（前2hr、之後）
+      const base = p.staff.wageType==='hourly' ? p.staff.wage : (p.staff.wage / 240);
+      const ot1h = Math.min(ot,2), ot2h = Math.max(0,ot-2);
+      p.otPayWeek += base*(ot1h*R.ot1 + ot2h*R.ot2);
+    });
+  });
+
+  const totals = {directMonth:0, loadedMonth:0};
+  state.staff.forEach(st=>{
+    const p = per[st.id];
+    p.restDays = 7 - p.daysWorked;
+    p.monthHours = p.weekHours*wpm;
+    p.monthOT = p.weekOT*wpm;
+    // 加班處理：給加班費(pay) 或 換補休(comp，1:1 不折現金)
+    const isComp = state.rules.otMode==='comp';
+    p.otPayIfPaidMonth = p.otPayWeek*wpm;               // 若折現金的加班費（參考值）
+    p.compHoursMonth = isComp ? p.monthOT : 0;          // 補休時數（1:1）
+    const otCashWeek = isComp ? 0 : p.otPayWeek;        // 實際現金加班費
+    // 月薪資（直接成本）
+    let direct;
+    if(st.wageType==='monthly'){
+      direct = Number(st.wage) + otCashWeek*wpm;        // 月薪含正常工時，加班另計
+    }else{
+      direct = p.weekNormal*st.wage*wpm + otCashWeek*wpm; // 時薪：正常＋加班
+    }
+    p.directMonth = direct;
+    p.loadedMonth = direct*(1+R.burden/100);
+    totals.directMonth += direct;
+    totals.loadedMonth += p.loadedMonth;
+  });
+
+  const warns = validate(per);
+  return {per, totals, warns};
+}
+
+// 合法性 / 覆蓋檢查
+function validate(per){
+  const R = state.rules, W = [];
+  const push=(level,msg)=>W.push({level,msg});
+
+  // (a) 覆蓋：每個有開的診次是否有人、且達最低人數
+  DAYS.forEach(([d,dl])=>{
+    if(!state.week[d].open) return;
+    state.week[d].sessions.forEach(sid=>{
+      const s = sessById(sid); if(!s) return;
+      const assigned = ((state.roster[d]||{})[sid]||[]);
+      const need = s.minStaff||1;
+      if(assigned.length < need) push('hard', `${dl} · ${s.name}：缺人手（需 ${need} 人，目前 ${assigned.length} 人）`);
+      assigned.forEach(aid=>{ const st=staffById(aid); if(st && !isAvail(st,d,sid)) push('hard', `${st.name}：被排在 ${dl} · ${s.name}，但此時段設為「不可上班」`); });
+    });
+  });
+
+  // (b) 每位助理的個別限制
+  state.staff.forEach(st=>{
+    const p = per[st.id];
+    // 一週上班天數
+    if(p.daysWorked > (st.maxDays||7))
+      push('hard', `${st.name}：一週排了 ${p.daysWorked} 天，超過設定上限 ${st.maxDays} 天`);
+    // 一例一休（休假天數）
+    if(p.daysWorked>0 && p.restDays < R.minRestDays)
+      push('hard', `${st.name}：一週只休 ${p.restDays} 天，未達 ${R.minRestDays} 天（一例一休）`);
+    // 一天最多幾診
+    Object.entries(p.dayHours).forEach(([d,info])=>{
+      if(info.sess > (st.maxSessDay||9)){
+        const dl = DAYS.find(x=>x[0]===d)[1];
+        push('hard', `${st.name}：${dl} 排了 ${info.sess} 診，超過「一天最多 ${st.maxSessDay} 診」`);
+      }
+      if(info.hours > R.dailyNormal && st.ot==='none'){
+        const dl = DAYS.find(x=>x[0]===d)[1];
+        push('soft', `${st.name}：${dl} 工時 ${info.hours.toFixed(1)}hr 已超過 8hr，但其設定為「不加班」`);
+      }
+    });
+    // 每月加班上限
+    if(p.monthOT > R.monthlyOtCap)
+      push('hard', `${st.name}：估計月加班 ${p.monthOT.toFixed(1)}hr，超過法定上限 ${R.monthlyOtCap}hr`);
+    // 每週正常工時
+    if(p.weekNormal > R.weeklyNormal)
+      push('soft', `${st.name}：一週正常工時 ${p.weekNormal.toFixed(1)}hr 超過 ${R.weeklyNormal}hr，超出部分應計加班`);
+  });
+  return W;
+}
+
+/* ========== 5) 自動排班引擎（貪婪啟發式，可日後替換為更佳演算法） ========== */
+function autoFill(){
+  if(state.staff.length===0){ alert('請先新增助理'); return; }
+  const R = state.rules;
+  // 重置排班
+  const roster={}; DAYS.forEach(([d])=>roster[d]={});
+  // 追蹤每人狀態
+  const track={}; state.staff.forEach(s=>track[s.id]={days:new Set(), dayHours:{}, daySess:{}, weekHours:0});
+
+  DAYS.forEach(([d])=>{
+    if(!state.week[d].open) return;
+    state.week[d].sessions.forEach(sid=>{
+      const s = sessById(sid); const need = s.minStaff||1;
+      roster[d][sid] = roster[d][sid]||[];
+      while(roster[d][sid].length < need){
+        const cand = pickCandidate(d, sid, roster, track);
+        if(!cand) break; // 排不出，留空由檢查標紅
+        roster[d][sid].push(cand.id);
+        // 更新追蹤
+        const tk=track[cand.id]; tk.days.add(d);
+        tk.dayHours[d]=(tk.dayHours[d]||0)+sessHours(sid);
+        tk.daySess[d]=(tk.daySess[d]||0)+1;
+        tk.weekHours+=sessHours(sid);
+      }
+    });
+  });
+  state.roster = roster; save(); renderRoster(); renderCost();
+  const {warns}=compute();
+  const gaps = warns.filter(w=>w.level==='hard').length;
+  switchTab('roster');
+  if(gaps) alert('已試排完成，但有 '+gaps+' 項限制/缺口需調整，請看「成本／檢查」頁。');
+}
+
+function pickCandidate(day, sid, roster, track){
+  const R=state.rules, sh=sessHours(sid);
+  let best=null, bestScore=-1e9;
+  state.staff.forEach(st=>{
+    const tk=track[st.id];
+    if(roster[day][sid].includes(st.id)) return;           // 同診次已排該人
+    if(!isAvail(st,day,sid)) return;                        // 該助理此時段不可上班（例如在別家上班）
+    // 硬限制：一天最多幾診
+    if((tk.daySess[day]||0) + 1 > (st.maxSessDay||9)) return;
+    // 硬限制：一週最多幾天（若今天還沒上過班）
+    const newDay = !tk.days.has(day);
+    if(newDay && tk.days.size + 1 > (st.maxDays||7)) return;
+    // 硬限制：一週休假天數（保留 minRestDays）
+    if(newDay && (7 - (tk.days.size+1)) < R.minRestDays) return;
+    // 加班政策：不加班者，這一診不能讓當日超過 8hr
+    const dayH=(tk.dayHours[day]||0);
+    if(st.ot==='none' && dayH + sh > R.dailyNormal) return;
+    // 評分：優先「今天已在上班」(集中班段) > 全職 > 週工時少者 > 可配合/可加班
+    let score=0;
+    if(!newDay) score+=100;                    // 集中同一天，減少跨天
+    if(st.type==='full') score+=30;            // 全職優先排滿
+    score -= tk.weekHours*1.2;                 // 平衡負載
+    if(st.ot==='allow') score+=2; if(st.ot==='flex') score+=1;
+    if(st.ot==='none' && dayH+sh>R.dailyNormal) score-=50;
+    if(score>bestScore){ bestScore=score; best=st; }
+  });
+  return best;
+}
+
+/* ========== 6) 渲染 ========== */
+function renderAll(){
+  $('clinicName').value = state.clinicName||'';
+  renderSessions(); renderWeek(); renderStaff(); renderRoster(); renderCost(); renderSettings();
+}
+
+// --- 分頁1：診次 ---
+function renderSessions(){
+  const box=$('sessionList'); box.innerHTML='';
+  state.sessions.forEach(s=>{
+    const el=document.createElement('div'); el.className='card'; el.style.margin='0 0 10px'; el.style.background='var(--bg)';
+    el.innerHTML=`
+      <div class="inline" style="justify-content:space-between">
+        <input value="${esc(s.name)}" onchange="editSession('${s.id}','name',this.value)" style="font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 9px;max-width:130px">
+        <button class="btn sm danger" onclick="delSession('${s.id}')">刪除</button>
+      </div>
+      <div class="row mt">
+        <div class="field"><label>看診開始</label><input type="time" value="${s.cStart}" onchange="editSession('${s.id}','cStart',this.value)"></div>
+        <div class="field"><label>看診結束</label><input type="time" value="${s.cEnd}" onchange="editSession('${s.id}','cEnd',this.value)"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>助理到勤</label><input type="time" value="${s.sStart}" onchange="editSession('${s.id}','sStart',this.value)"></div>
+        <div class="field"><label>助理下班</label><input type="time" value="${s.sEnd}" onchange="editSession('${s.id}','sEnd',this.value)"></div>
+      </div>
+      <p class="tiny">此診次助理工時：<b>${sessHours(s.id).toFixed(2)} 小時</b>（含提早準備／收尾）</p>`;
+    box.appendChild(el);
+  });
+}
+// --- 分頁1：每週 ---
+function renderWeek(){
+  const box=$('weekGrid'); box.innerHTML='';
+  DAYS.forEach(([d,dl])=>{
+    const wd=state.week[d];
+    const row=document.createElement('div'); row.className='dayrow'+(wd.open?'':' closed');
+    row.innerHTML=`
+      <div class="dhead">
+        <label class="sw"><input type="checkbox" ${wd.open?'checked':''} onchange="toggleDay('${d}',this.checked)"><span></span></label>
+        <b>${dl}</b><span class="sub">${wd.open?'營業':'休診'}</span>
+      </div>
+      <div class="chips">${state.sessions.map(s=>`<span class="chip ${wd.sessions.includes(s.id)?'on':''}" onclick="toggleDaySess('${d}','${s.id}')">${esc(s.name)}</span>`).join('')}</div>`;
+    box.appendChild(row);
+  });
+}
+
+// --- 分頁2：助理 ---
+function renderStaff(){
+  const box=$('staffList'); box.innerHTML='';
+  state.staff.forEach(st=>{
+    const el=document.createElement('div'); el.className='staffcard';
+    el.innerHTML=`
+      <div class="tophue" style="background:${st.color}"></div>
+      <div class="sc-head">
+        <input value="${esc(st.name)}" onchange="editStaff('${st.id}','name',this.value)" style="font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 9px;max-width:120px">
+        <span class="badge ${st.type==='full'?'full':'part'}">${st.type==='full'?'全職':'兼職'}</span>
+        <button class="btn sm danger" style="margin-left:auto" onclick="delStaff('${st.id}')">刪除</button>
+      </div>
+      <div class="row">
+        <div class="field"><label>身分</label><select onchange="editStaff('${st.id}','type',this.value)">
+          <option value="full" ${st.type==='full'?'selected':''}>全職</option>
+          <option value="part" ${st.type==='part'?'selected':''}>兼職</option></select></div>
+        <div class="field"><label>薪資方式</label><select onchange="editStaff('${st.id}','wageType',this.value)">
+          <option value="monthly" ${st.wageType==='monthly'?'selected':''}>月薪</option>
+          <option value="hourly" ${st.wageType==='hourly'?'selected':''}>時薪</option></select></div>
+        <div class="field"><label>${st.wageType==='monthly'?'月薪(元)':'時薪(元)'}</label><input type="number" inputmode="numeric" value="${st.wage}" onchange="editStaff('${st.id}','wage',+this.value)"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>一天最多幾診</label><input type="number" inputmode="numeric" value="${st.maxSessDay}" onchange="editStaff('${st.id}','maxSessDay',+this.value)"></div>
+        <div class="field"><label>一週最多幾天</label><input type="number" inputmode="numeric" value="${st.maxDays}" onchange="editStaff('${st.id}','maxDays',+this.value)"></div>
+        <div class="field"><label>加班意願</label><select onchange="editStaff('${st.id}','ot',this.value)">
+          ${OT_POLICIES.map(([v,l])=>`<option value="${v}" ${st.ot===v?'selected':''}>${l}</option>`).join('')}</select></div>
+      </div>
+      <div class="field"><label>可上班時段（在別家兼職時用）</label>
+        <select onchange="editStaff('${st.id}','availMode',this.value)">
+          <option value="all" ${st.availMode!=='custom'?'selected':''}>全部時段都可</option>
+          <option value="custom" ${st.availMode==='custom'?'selected':''}>限特定時段（排班會自動避開不可時段）</option>
+        </select></div>
+      ${st.availMode==='custom'?availGridHtml(st):''}`;
+    box.appendChild(el);
+  });
+}
+
+// --- 分頁3：排班表 ---
+function renderRoster(){
+  const tb=$('rosterTable'); const ods=openDays();
+  if(ods.length===0){ tb.innerHTML='<tr><td style="padding:16px" class="sub">尚未設定營業日，請先到「看診時段」開啟營業日。</td></tr>'; $('rosterLegend').innerHTML=''; return; }
+  let html='<thead><tr><th class="corner sesscol">診次＼日</th>';
+  ods.forEach(([d,dl])=>html+=`<th>${dl}</th>`);
+  html+='</tr></thead><tbody>';
+  state.sessions.forEach(s=>{
+    html+=`<tr><th class="sesscol">${esc(s.name)}<small>${s.sStart}–${s.sEnd}</small></th>`;
+    ods.forEach(([d])=>{
+      const open = state.week[d].sessions.includes(s.id);
+      if(!open){ html+=`<td><div class="cell closed"><span class="sub">—</span></div></td>`; return; }
+      const ass=((state.roster[d]||{})[s.id]||[]);
+      const chips = ass.map(id=>{const st=staffById(id); return st?`<span class="stf" style="background:${st.color}">${esc(st.name)}</span>`:''}).join('');
+      const miss = ass.length < (s.minStaff||1) ? `<span class="miss">缺人</span>` : '';
+      html+=`<td><div class="cell" onclick="openAssign('${d}','${s.id}')">${chips||miss||'<span class="sub">＋</span>'}</div></td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody>';
+  tb.innerHTML=html;
+  $('rosterLegend').innerHTML = '圖例：'+state.staff.map(st=>`<span class="stf" style="background:${st.color};margin-right:4px">${esc(st.name)}</span>`).join('');
+  const cs=$('copySrc'); if(cs) cs.innerHTML=ods.map(([d,dl])=>`<option value="${d}">${dl}</option>`).join('');
+  renderMiniStats();
+}
+
+// 排班頁底部：迷你統計
+function renderMiniStats(){
+  const {per}=compute(); let html='';
+  state.staff.forEach(st=>{
+    const p=per[st.id];
+    html+=`<div class="stat"><span><span class="stf" style="background:${st.color}">${esc(st.name)}</span></span>
+      <b>${p.weekHours.toFixed(1)}hr/週 · ${p.daysWorked}天 · 加班${p.weekOT.toFixed(1)}hr</b></div>`;
+  });
+  $('rosterMini').innerHTML = html?`<hr class="sep"><div class="sub" style="margin-bottom:4px">本週工時速覽</div>${html}`:'';
+}
+
+// --- 分頁4：成本／檢查 ---
+function renderCost(){
+  const {per,totals,warns}=compute();
+  // 檢查
+  const wa=$('warnArea');
+  if(warns.length===0){ wa.innerHTML='<div class="warnbox ok">✅ 目前排班沒有偵測到違規或缺口</div>'; }
+  else{
+    wa.innerHTML = warns.map(w=>`<div class="warn ${w.level==='soft'?'soft':''}"><span class="ic">${w.level==='soft'?'⚠️':'⛔'}</span><span>${esc(w.msg)}</span></div>`).join('');
+  }
+  // 成本
+  let html='';
+  state.staff.forEach(st=>{
+    const p=per[st.id];
+    html+=`<div style="border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:8px">
+      <div class="inline" style="justify-content:space-between;margin-bottom:4px">
+        <b><span class="stf" style="background:${st.color}">${esc(st.name)}</span> <span class="sub">${st.type==='full'?'全職':'兼職'}·${st.wageType==='monthly'?'月薪'+st.wage:'時薪'+st.wage}</span></b>
+      </div>
+      <div class="stat"><span>月工時（估）</span><b>${p.monthHours.toFixed(0)} hr</b></div>
+      <div class="stat"><span>月加班（估）</span><b>${p.monthOT.toFixed(1)} hr</b></div>
+      <div class="stat"><span>加班處理</span><b>${state.rules.otMode==='comp' ? '換補休 '+p.compHoursMonth.toFixed(1)+'hr（不折現金）' : '給加班費 '+money(p.otPayIfPaidMonth)}</b></div>
+      ${state.rules.otMode==='comp'&&p.compHoursMonth>0 ? `<div class="stat"><span class="sub">└ 期限內未休完須折發</span><b class="sub">約 ${money(p.otPayIfPaidMonth)}</b></div>` : ''}
+      <div class="stat"><span>上班/休假</span><b>${p.daysWorked} 天 / 休 ${p.restDays} 天</b></div>
+      <div class="stat"><span>直接薪資（含加班）</span><b>${money(p.directMonth)}</b></div>
+      <div class="stat"><span>含雇主負擔</span><b>${money(p.loadedMonth)}</b></div>
+    </div>`;
+  });
+  html+=`<div class="stat mt"><span class="total">月總人事成本</span><span class="total">${money(totals.loadedMonth)}</span></div>
+    <div class="sub">（直接薪資合計 ${money(totals.directMonth)}　＋　雇主勞健保負擔約 ${money(totals.loadedMonth-totals.directMonth)}）</div>`;
+  $('costArea').innerHTML=html;
+  $('dc-ot1').textContent=state.rules.ot1; $('dc-ot2').textContent=state.rules.ot2;
+}
+
+// --- 分頁5：設定 ---
+function renderSettings(){
+  const R=state.rules;
+  $('p-system').value=R.system||'standard';
+  $('p-otMode').value=R.otMode||'pay';
+  $('systemNote').textContent = '📌 '+(SYSTEMS[R.system||'standard'].note);
+  $('otModeNote').textContent = R.otMode==='comp'
+    ? '📌 換補休：加班1hr換補休1hr（非1.34倍）；選擇權在勞工、不能強迫；限期內未休完仍須折發加班費。'
+    : '📌 給加班費：前2hr×'+R.ot1+'、之後×'+R.ot2+' 核實計算。';
+  $('p-dailyNormal').value=R.dailyNormal; $('p-weeklyNormal').value=R.weeklyNormal;
+  $('p-monthlyOtCap').value=R.monthlyOtCap; $('p-minRestDays').value=R.minRestDays;
+  $('p-ot1').value=R.ot1; $('p-ot2').value=R.ot2; $('p-minWage').value=R.minWage; $('p-burden').value=R.burden;
+}
+
+/* ========== 7) 事件處理 ========== */
+// 分頁切換
+function switchTab(name){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
+  document.querySelectorAll('section.panel').forEach(p=>p.classList.toggle('on',p.id==='panel-'+name));
+  if(name==='roster') renderRoster();
+  if(name==='cost') renderCost();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+// 診所名稱
+$('clinicName').onchange=e=>{ state.clinicName=e.target.value; save(); };
+
+// 診次
+function addSession(){ state.sessions.push({id:uid('s'),name:'新診次',cStart:'09:00',cEnd:'12:00',sStart:'08:45',sEnd:'12:15',minStaff:1}); save(); renderSessions(); renderWeek(); renderRoster(); }
+function editSession(id,k,v){ const s=sessById(id); if(!s)return; s[k]=v; save(); renderSessions(); renderRoster(); renderCost(); }
+function delSession(id){ if(!confirm('刪除此診次？相關排班也會移除'))return;
+  state.sessions=state.sessions.filter(s=>s.id!==id);
+  DAYS.forEach(([d])=>{ state.week[d].sessions=state.week[d].sessions.filter(x=>x!==id); if(state.roster[d])delete state.roster[d][id]; });
+  save(); renderSessions(); renderWeek(); renderRoster(); renderCost(); }
+
+// 每週
+function toggleDay(d,on){ state.week[d].open=on; if(on&&state.week[d].sessions.length===0) state.week[d].sessions=state.sessions.map(s=>s.id); save(); renderWeek(); renderRoster(); renderCost(); }
+function toggleDaySess(d,sid){ const arr=state.week[d].sessions; const i=arr.indexOf(sid); if(i>=0)arr.splice(i,1);else arr.push(sid); if(arr.length>0)state.week[d].open=true; save(); renderWeek(); renderRoster(); renderCost(); }
+
+// 助理
+function addStaff(){ const i=state.staff.length; state.staff.push({id:uid('u'),name:'助理'+String.fromCharCode(65+i),type:'part',wageType:'hourly',wage:200,maxSessDay:2,maxDays:5,ot:'flex',availMode:'all',avail:{},color:STAFF_COLORS[i%STAFF_COLORS.length]}); save(); renderStaff(); renderRoster(); renderCost(); }
+function editStaff(id,k,v){ const s=staffById(id); if(!s)return; s[k]=v;
+  // 切成「限特定時段」時，若尚未設定，預設全部可上（再由使用者拿掉不可的）
+  if(k==='availMode' && v==='custom' && (!s.avail || Object.keys(s.avail).length===0)){
+    s.avail={}; openDays().forEach(([d])=>{ s.avail[d]=state.week[d].sessions.slice(); });
+  }
+  save(); if(k==='wageType'||k==='type'||k==='availMode')renderStaff(); renderRoster(); renderCost(); }
+// 可上班時段小格（只列營業日；綠=可上、灰=不可）
+function availGridHtml(st){
+  const ods=openDays(); if(ods.length===0) return '<p class="tiny">請先設定營業日</p>';
+  let h='<div class="tiny" style="margin:0 0 6px">點一下切換：<b style="color:var(--teal)">綠=可上班</b>、灰=不可（她在別家上班的時段）</div>';
+  ods.forEach(([d,dl])=>{
+    h+=`<div class="inline" style="margin-bottom:5px"><b style="width:40px;font-size:12px;flex:0 0 auto">${dl}</b><div class="chips">`;
+    state.week[d].sessions.forEach(sid=>{ const s=sessById(sid);
+      h+=`<span class="chip ${isAvail(st,d,sid)?'on':''}" onclick="toggleAvail('${st.id}','${d}','${sid}')">${esc(s.name)}</span>`; });
+    h+='</div></div>';
+  });
+  return `<div style="border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px">${h}</div>`;
+}
+function toggleAvail(id,d,sid){ const s=staffById(id); if(!s)return; s.avail=s.avail||{}; s.avail[d]=s.avail[d]||[];
+  const i=s.avail[d].indexOf(sid); if(i>=0)s.avail[d].splice(i,1); else s.avail[d].push(sid);
+  save(); renderStaff(); renderRoster(); renderCost(); }
+function delStaff(id){ if(!confirm('刪除此助理？其排班會被清除'))return;
+  state.staff=state.staff.filter(s=>s.id!==id);
+  DAYS.forEach(([d])=>{ Object.keys(state.roster[d]||{}).forEach(sid=>{ state.roster[d][sid]=state.roster[d][sid].filter(x=>x!==id); }); });
+  save(); renderStaff(); renderRoster(); renderCost(); }
+
+// 排班：指派 modal
+let _assign={day:null,sid:null};
+function openAssign(day,sid){
+  _assign={day,sid}; const s=sessById(sid); const dl=DAYS.find(x=>x[0]===day)[1];
+  $('modalTitle').textContent=`指派助理 · ${dl} ${s.name}`;
+  $('modalSub').textContent=`${s.sStart}–${s.sEnd}　(${sessHours(sid).toFixed(2)}hr)　最低 ${s.minStaff||1} 人`;
+  renderPicks();
+  $('modalBg').classList.add('on');
+}
+function renderPicks(){
+  const {day,sid}=_assign; const cur=((state.roster[day]||{})[sid]||[]);
+  if(state.staff.length===0){ $('modalPicks').innerHTML='<p class="sub">尚無助理，請先到「助理設定」新增。</p>'; return; }
+  $('modalPicks').innerHTML = state.staff.map(st=>{
+    const sel=cur.includes(st.id); const na=!isAvail(st,day,sid);
+    return `<div class="pick ${sel?'sel':''}" onclick="toggleAssign('${st.id}')">
+      <span class="dot" style="background:${st.color}"></span>
+      <span>${esc(st.name)}</span>
+      <span class="sub">${st.type==='full'?'全職':'兼職'}</span>
+      ${sel?'<span class="na" style="color:var(--teal)">✓ 已排</span>':(na?'<span class="na">⚠ 此時段設為不可上班</span>':'')}
+    </div>`;
+  }).join('');
+}
+function toggleAssign(id){
+  const {day,sid}=_assign; state.roster[day]=state.roster[day]||{}; state.roster[day][sid]=state.roster[day][sid]||[];
+  const arr=state.roster[day][sid]; const i=arr.indexOf(id); if(i>=0)arr.splice(i,1);else arr.push(id);
+  save(); renderPicks(); renderRoster();
+}
+function closeModal(){ $('modalBg').classList.remove('on'); renderCost(); }
+
+function clearRoster(){ if(!confirm('清空目前所有排班？'))return; DAYS.forEach(([d])=>state.roster[d]={}); save(); renderRoster(); renderCost(); }
+// 複製某天班表到其他營業日（只套用各天有開的診次）
+function copyDay(){
+  const src=$('copySrc').value; if(!src)return;
+  const dl=DAYS.find(x=>x[0]===src)[1];
+  if(!confirm('把「'+dl+'」的排班複製到其他營業日？'))return;
+  const srcR=state.roster[src]||{};
+  openDays().forEach(([d])=>{ if(d===src)return; const nr={};
+    state.week[d].sessions.forEach(sid=>{ nr[sid]=(srcR[sid]||[]).slice(); }); state.roster[d]=nr; });
+  save(); renderRoster(); renderCost();
+}
+// 列印／存 PDF（用瀏覽器列印，可選另存 PDF）
+function printRoster(){
+  switchTab('roster');
+  const name=state.clinicName||'診所';
+  const sys=SYSTEMS[state.rules.system||'standard'].name;
+  const d=new Date().toLocaleDateString('zh-TW');
+  $('printTitle').innerHTML=`<h2 style="margin:0 0 2px">${esc(name)} · 助理班表</h2><div style="font-size:12px;color:#555">工時制度：${esc(sys)}　·　列印日期：${d}</div>`;
+  setTimeout(()=>window.print(),60);
+}
+
+// 設定：勞基法參數
+['dailyNormal','weeklyNormal','monthlyOtCap','minRestDays','ot1','ot2','minWage','burden'].forEach(k=>{
+  $('p-'+k).onchange=e=>{ state.rules[k]=+e.target.value; save(); renderSessions(); renderRoster(); renderCost(); };
+});
+// 工時制度：切換時自動套用單日/單週上限
+$('p-system').onchange=e=>{
+  const sys=e.target.value; state.rules.system=sys;
+  const def=SYSTEMS[sys]; state.rules.dailyNormal=def.dailyNormal; state.rules.weeklyNormal=def.weeklyNormal;
+  save(); renderSettings(); renderRoster(); renderCost();
+};
+$('p-otMode').onchange=e=>{ state.rules.otMode=e.target.value; save(); renderSettings(); renderCost(); };
+
+// 備份／還原
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='診所排班備份_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+function importJSON(ev){
+  const f=ev.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=()=>{ try{ state=migrate(JSON.parse(r.result)); save(); renderAll(); switchTab('roster'); alert('匯入成功'); }catch(e){ alert('檔案格式錯誤'); } };
+  r.readAsText(f); ev.target.value='';
+}
+function loadDemo(){ if(!confirm('載入範例會覆蓋目前資料，確定？'))return; state=demoState(); save(); renderAll(); switchTab('roster'); }
+function wipe(){ if(!confirm('確定清除全部資料？此動作無法復原'))return; localStorage.removeItem(STORE_KEY); state=demoState(); save(); renderAll(); }
+
+/* ========== 8) 初始化 ========== */
+renderAll();
+</script>
+</body>
+</html>

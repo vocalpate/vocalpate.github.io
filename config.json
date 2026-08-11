@@ -261,6 +261,20 @@
         { "text": "Apps Script", "color": "purple" },
         { "text": "手機優先", "color": "green" }
       ]
+    },
+    {
+      "name": "診所助理排班系統",
+      "desc": "設定看診時段、助理全職/兼職與加班政策，自動排班＋勞基法檢查（一例一休/2週·4週變形/補休）＋人事成本試算，可列印班表。",
+      "url": "/roster/",
+      "icon": "🗓️",
+      "iconBg": "#ECFDF5",
+      "category": "診所開業",
+      "status": "dev",
+      "tags": [
+        { "text": "純 HTML", "color": "amber" },
+        { "text": "勞基法試算", "color": "purple" },
+        { "text": "手機優先", "color": "green" }
+      ]
     }
   ]
 }
