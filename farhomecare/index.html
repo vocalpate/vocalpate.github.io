@@ -1,0 +1,420 @@
+<title>偏鄉醫療盈虧試算</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root{
+    --bg:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --border:#dde3ec;
+    --ink:#1b2431; --ink-soft:#5a6676; --ink-faint:#8b97a7;
+    --accent:#285d82; --accent-soft:#e4eef4; --gold:#9c6f1f; --gold-soft:#f6ecd6;
+    --pos:#1c8a5a; --pos-soft:#e2f3ea; --neg:#c23b34; --neg-soft:#fbe7e5;
+    --shadow:0 1px 2px rgba(20,30,45,.05), 0 6px 20px rgba(20,30,45,.06);
+    --radius:14px;
+    --font:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#10151c; --surface:#191f28; --surface-2:#212936; --border:#2c3646;
+      --ink:#e8edf3; --ink-soft:#9aa7b7; --ink-faint:#6b7889;
+      --accent:#6db3d8; --accent-soft:#1d2c38; --gold:#e0b25a; --gold-soft:#2a2413;
+      --pos:#46c088; --pos-soft:#16281f; --neg:#e8635a; --neg-soft:#2c1917;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10151c; --surface:#191f28; --surface-2:#212936; --border:#2c3646;
+    --ink:#e8edf3; --ink-soft:#9aa7b7; --ink-faint:#6b7889;
+    --accent:#6db3d8; --accent-soft:#1d2c38; --gold:#e0b25a; --gold-soft:#2a2413;
+    --pos:#46c088; --pos-soft:#16281f; --neg:#e8635a; --neg-soft:#2c1917;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); font-family:var(--font);
+    font-size:16px; line-height:1.5; -webkit-text-size-adjust:100%;
+    font-variant-numeric:tabular-nums;
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:16px 14px 64px}
+
+  header.top{padding:6px 2px 14px; display:flex; align-items:flex-start; justify-content:space-between; gap:10px}
+  header.top h1{font-size:1.32rem; line-height:1.2; margin:0; letter-spacing:.2px; text-wrap:balance}
+  header.top p{margin:4px 0 0; color:var(--ink-soft); font-size:.82rem}
+  .theme-btn{flex:none; background:var(--surface); border:1px solid var(--border); color:var(--ink-soft);
+    border-radius:10px; width:40px; height:40px; font-size:1.1rem; cursor:pointer}
+  .theme-btn:active{transform:scale(.95)}
+
+  /* segmented mode */
+  .seg{display:grid; grid-template-columns:repeat(3,1fr); gap:4px; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:14px}
+  .seg button{appearance:none; border:0; background:transparent; color:var(--ink-soft);
+    padding:11px 4px; border-radius:9px; font-size:.92rem; font-weight:600; cursor:pointer; font-family:inherit}
+  .seg button.on{background:var(--accent); color:#fff; box-shadow:var(--shadow)}
+  :root[data-theme="dark"] .seg button.on, :root:not([data-theme="light"]) .seg button.on{color:#0c1219}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button.on{color:#0c1219}}
+
+  /* summary */
+  .summary{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 16px 14px; margin-bottom:16px; position:sticky; top:8px; z-index:5}
+  .summary .lbl{font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); font-weight:700}
+  .net{font-size:2.5rem; font-weight:800; line-height:1.05; margin:2px 0 2px; letter-spacing:-.5px}
+  .net.pos{color:var(--pos)} .net.neg{color:var(--neg)}
+  .net-sub{font-size:.82rem; color:var(--ink-soft)}
+  .bar{display:flex; height:10px; border-radius:6px; overflow:hidden; margin:14px 0 8px; background:var(--surface-2)}
+  .bar .rev{background:var(--pos)} .bar .cost{background:var(--neg)}
+  .rc{display:flex; justify-content:space-between; font-size:.82rem; margin-top:2px}
+  .rc .r{color:var(--pos); font-weight:600} .rc .c{color:var(--neg); font-weight:600}
+
+  details.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-bottom:12px; overflow:hidden}
+  details.card>summary{list-style:none; cursor:pointer; padding:14px 16px; font-weight:700; font-size:1rem;
+    display:flex; align-items:center; gap:8px; justify-content:space-between}
+  details.card>summary::-webkit-details-marker{display:none}
+  details.card>summary .chev{color:var(--ink-faint); font-size:.8rem; transition:transform .2s}
+  details.card[open]>summary .chev{transform:rotate(90deg)}
+  details.card>summary .tag{font-size:.72rem; font-weight:600; color:var(--accent); background:var(--accent-soft);
+    padding:2px 8px; border-radius:20px; margin-left:auto}
+  .card-body{padding:2px 16px 14px}
+
+  .row{display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--border)}
+  .row:first-child{border-top:0}
+  .row label{flex:1; font-size:.9rem; color:var(--ink)}
+  .row label small{display:block; color:var(--ink-faint); font-size:.74rem; font-weight:400}
+  .fld{display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:10px; padding:0 10px; min-width:118px}
+  .fld input{width:100%; border:0; background:transparent; color:var(--ink); font-family:inherit;
+    font-size:1rem; font-weight:600; text-align:right; padding:10px 0; min-width:0; font-variant-numeric:tabular-nums}
+  .fld input:focus{outline:none}
+  .fld:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+  .fld .u{color:var(--ink-faint); font-size:.8rem; padding-left:6px; flex:none}
+  input[type=number]{-moz-appearance:textfield}
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+
+  .switch{display:flex; align-items:center; gap:8px}
+  .switch input{width:44px; height:26px; appearance:none; background:var(--border); border-radius:20px; position:relative; cursor:pointer; flex:none; transition:background .15s}
+  .switch input:checked{background:var(--accent)}
+  .switch input::after{content:""; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:3px; left:3px; transition:left .15s}
+  .switch input:checked::after{left:21px}
+
+  /* breakdown */
+  .bd{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:12px}
+  .bd h3{margin:0; padding:13px 16px 10px; font-size:.95rem}
+  .line{display:flex; justify-content:space-between; align-items:baseline; padding:8px 16px; font-size:.9rem; border-top:1px solid var(--border)}
+  .line .k{color:var(--ink-soft)} .line .k small{color:var(--ink-faint); font-size:.76rem}
+  .line .v{font-weight:600; font-variant-numeric:tabular-nums}
+  .line.sub .k{padding-left:12px; color:var(--ink-faint); font-size:.84rem}
+  .line.total{background:var(--surface-2); font-weight:800}
+  .line.total .v{font-size:1.05rem}
+  .v.pos{color:var(--pos)} .v.neg{color:var(--neg)} .v.gold{color:var(--gold)}
+  .dot{display:inline-block; width:7px; height:7px; border-radius:2px; margin-right:6px; vertical-align:middle}
+
+  .metrics{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
+  .metric{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; box-shadow:var(--shadow)}
+  .metric .m-lbl{font-size:.74rem; color:var(--ink-faint); font-weight:600}
+  .metric .m-val{font-size:1.15rem; font-weight:800; margin-top:2px}
+
+  .actions{display:flex; gap:10px; margin-top:6px}
+  .actions button{flex:1; padding:12px; border-radius:11px; border:1px solid var(--border); background:var(--surface);
+    color:var(--ink-soft); font-family:inherit; font-size:.9rem; font-weight:600; cursor:pointer}
+  .actions button:active{transform:scale(.98)}
+
+  .note{font-size:.78rem; color:var(--ink-faint); line-height:1.6; margin-top:16px; padding:0 4px}
+  .note b{color:var(--ink-soft)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>偏鄉醫療盈虧試算</h1>
+      <p>中醫 · 單趟（早門診／下午居家）成本效益</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" title="切換深淺色">◐</button>
+  </header>
+
+  <div class="seg" id="mode">
+    <button data-mode="clinic">只做門診</button>
+    <button data-mode="home">只做居家</button>
+    <button data-mode="both" class="on">門診＋居家</button>
+  </div>
+
+  <div class="summary">
+    <div class="lbl">本趟淨盈虧</div>
+    <div class="net" id="netVal">—</div>
+    <div class="net-sub" id="netSub"></div>
+    <div class="bar"><div class="rev" id="barRev"></div><div class="cost" id="barCost"></div></div>
+    <div class="rc"><span class="r" id="rcRev">收入 —</span><span class="c" id="rcCost">支出 —</span></div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="m-lbl">每位居家病人邊際貢獻</div><div class="m-val" id="mHome">—</div></div>
+    <div class="metric"><div class="m-lbl">每位門診病人邊際貢獻</div><div class="m-val" id="mClinic">—</div></div>
+  </div>
+
+  <!-- 收入 -->
+  <details class="card" open>
+    <summary><span class="chev">▶</span>收入參數<span class="tag" id="tagRev">—</span></summary>
+    <div class="card-body">
+      <div class="row" data-grp="clinic"><label>車馬費補助<small>三級偏鄉門診，固定/趟</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="travelSubsidy"><span class="u">元</span></div></div>
+      <div class="row" data-grp="clinic"><label>門診人數</label>
+        <div class="fld"><input type="number" inputmode="decimal" id="clinicPatients"><span class="u">人</span></div></div>
+      <div class="row" data-grp="clinic"><label>門診一般診察費<small>山地離島聘護理 A09＝335</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="clinicOther"><span class="u">點</span></div></div>
+      <div class="row" data-grp="clinic"><label>門診一般針灸點數<small>B41/B42＝227</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="acuPoints"><span class="u">點</span></div></div>
+      <div class="row" data-grp="clinic"><label>門診點值<small>診察＋針灸共用</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" step="0.01" id="acuValue"><span class="u">元/點</span></div></div>
+
+      <div class="row" data-grp="home"><label>居家人數</label>
+        <div class="fld"><input type="number" inputmode="decimal" id="homePatients"><span class="u">人</span></div></div>
+      <div class="row" data-grp="home"><label>居家訪視費點數<small>山地離島中醫師 2,154</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="homeVisitPoints"><span class="u">點</span></div></div>
+      <div class="row" data-grp="home"><label>居家訪視費點值</label>
+        <div class="fld"><input type="number" inputmode="decimal" step="0.01" id="homeVisitValue"><span class="u">元/點</span></div></div>
+      <div class="row" data-grp="home"><label>居家複雜性針灸點數<small>高度複雜 427，不做填 0</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="homeAcuPoints"><span class="u">點</span></div></div>
+      <div class="row" data-grp="home"><label>居家針灸點值</label>
+        <div class="fld"><input type="number" inputmode="decimal" step="0.01" id="homeAcuValue"><span class="u">元/點</span></div></div>
+
+      <div class="row"><label>健保核刪／不符給付率<small>只套用在健保點數收入，車馬費不核刪</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" step="0.5" id="denialRate"><span class="u">%</span></div></div>
+    </div>
+  </details>
+
+  <!-- 人事 -->
+  <details class="card">
+    <summary><span class="chev">▶</span>人事支出<span class="tag" id="tagStaff">—</span></summary>
+    <div class="card-body">
+      <div class="row" data-grp="clinic"><label>醫師門診薪資<small>固定/趟</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="docClinicPay"><span class="u">元</span></div></div>
+      <div class="row" data-grp="home"><label>醫師居家薪資<small>每人</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="docHomePer"><span class="u">元/人</span></div></div>
+      <div class="row" data-grp="home"><label>醫師居家保底<small>不足以保底計</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="docHomeFloor"><span class="u">元</span></div></div>
+      <div class="row" data-grp="clinic"><label>護理師門診<small>固定/趟</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="nurseClinicPay"><span class="u">元</span></div></div>
+      <div class="row" data-grp="home"><label>護理師居家</label>
+        <div class="fld"><input type="number" inputmode="decimal" id="nurseHomePer"><span class="u">元/人</span></div></div>
+    </div>
+  </details>
+
+  <!-- 交通 -->
+  <details class="card">
+    <summary><span class="chev">▶</span>車輛與司機<span class="tag" id="tagTrans">—</span></summary>
+    <div class="card-body">
+      <div class="row"><label>來回里程<small>高雄↔那瑪夏 約 180</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="distanceKm"><span class="u">km</span></div></div>
+      <div class="row"><label>車輛成本<small>含油資折舊保養</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" step="0.5" id="vehCost"><span class="u">元/km</span></div></div>
+      <div class="row"><label>司機時薪</label>
+        <div class="fld"><input type="number" inputmode="decimal" id="driverHourly"><span class="u">元/hr</span></div></div>
+      <div class="row"><label>工作時數<small>含往返，約 10 小時</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" step="0.5" id="workHours"><span class="u">hr</span></div></div>
+      <div class="row"><label>需要司機？<small>醫師自行開車可關</small></label>
+        <div class="switch"><input type="checkbox" id="includeDriver" checked></div></div>
+    </div>
+  </details>
+
+  <!-- 場地與牌照 -->
+  <details class="card">
+    <summary><span class="chev">▶</span>場地與牌照<span class="tag" id="tagOther">—</span></summary>
+    <div class="card-body">
+      <div class="row" data-grp="clinic"><label>門診場地費<small>偏鄉門診，每次</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="venueFee"><span class="u">元</span></div></div>
+      <div class="row"><label>醫師牌照費加給<small>每月總額</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="licenseMonthly"><span class="u">元/月</span></div></div>
+      <div class="row"><label>每月工作天數<small>牌照費 ÷ 天數＝每趟攤提</small></label>
+        <div class="fld"><input type="number" inputmode="decimal" id="workDaysMonth"><span class="u">天</span></div></div>
+    </div>
+  </details>
+
+  <!-- 明細 -->
+  <div class="bd">
+    <h3>收入明細</h3>
+    <div id="revLines"></div>
+    <div class="line total"><span class="k">收入合計</span><span class="v pos" id="revTotal">—</span></div>
+  </div>
+  <div class="bd">
+    <h3>支出明細</h3>
+    <div id="costLines"></div>
+    <div class="line total"><span class="k">支出合計</span><span class="v neg" id="costTotal">—</span></div>
+  </div>
+
+  <div class="actions">
+    <button id="resetBtn">回復預設值</button>
+  </div>
+
+  <p class="note">
+    <b>計算假設</b>（皆可調整）：門診收入＝車馬費補助＋每人（山地離島診察費335＋一般針灸227）點數×門診點值；居家收入＝每人（訪視費2154＋複雜性針灸427）點數×點值。山地離島門診診察費為專屬代碼A09（聘護理335／未聘325），固定最高級距不隨門診量遞減，非百分比加乘；3歲以下兒童診察費另加20%。健保點數收入先扣核刪率，車馬費補助不核刪。<br>
+    「門診＋居家」時醫師薪資＝門診固定薪＋居家（每人×人數，未達保底以保底計），兩筆相加；如與醫師談的是整日一筆，請把居家保底設為 0 或自行調整。車輛與司機為整趟一次計算。<br>
+    <b>邊際貢獻</b>＝多收 1 位病人的淨增加（收入扣核刪後 − 該人變動成本）；門診加人不增司機／車輛／固定薪，故貢獻較高。點數與點值請以健保署當季公告與所在分區為準。
+  </p>
+</div>
+
+<script>
+const DEFAULTS={
+  mode:"both",
+  travelSubsidy:9800, clinicPatients:8, acuPoints:227, acuValue:0.9, clinicOther:335,
+  homePatients:8, homeVisitPoints:2154, homeVisitValue:1.0, homeAcuPoints:427, homeAcuValue:0.9,
+  denialRate:5,
+  docClinicPay:5000, docHomePer:800, docHomeFloor:5000, nurseClinicPay:1000, nurseHomePer:200,
+  venueFee:750, licenseMonthly:50000, workDaysMonth:20,
+  distanceKm:180, vehCost:10, driverHourly:400, workHours:10, includeDriver:true
+};
+const KEY="rural_med_calc_v1";
+const fields=["travelSubsidy","clinicPatients","acuPoints","acuValue","clinicOther",
+  "homePatients","homeVisitPoints","homeVisitValue","homeAcuPoints","homeAcuValue","denialRate",
+  "docClinicPay","docHomePer","docHomeFloor","nurseClinicPay","nurseHomePer",
+  "venueFee","licenseMonthly","workDaysMonth",
+  "distanceKm","vehCost","driverHourly","workHours"];
+let state=load();
+
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY)); if(s) return Object.assign({},DEFAULTS,s);}catch(e){}
+  return Object.assign({},DEFAULTS);
+}
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} }
+
+const $=id=>document.getElementById(id);
+const nf=new Intl.NumberFormat("zh-TW",{maximumFractionDigits:0});
+const money=n=>(n<0?"−NT$ ":"NT$ ")+nf.format(Math.abs(Math.round(n)));
+
+function bindFields(){
+  fields.forEach(f=>{
+    const el=$( f==="clinicOther"?"clinicOther":
+              f==="docHomePer"?"docHomePer":
+              f==="nurseHomePer"?"nurseHomePer":
+              f==="vehCost"?"vehCost": f );
+    if(!el) return;
+    el.value=state[f];
+    el.addEventListener("input",()=>{ const v=parseFloat(el.value); state[f]=isNaN(v)?0:v; save(); render(); });
+  });
+  $("includeDriver").checked=state.includeDriver;
+  $("includeDriver").addEventListener("change",e=>{state.includeDriver=e.target.checked; save(); render();});
+}
+
+// mode
+document.querySelectorAll("#mode button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    state.mode=b.dataset.mode; save();
+    document.querySelectorAll("#mode button").forEach(x=>x.classList.toggle("on",x===b));
+    render();
+  });
+});
+function setModeUI(){ document.querySelectorAll("#mode button").forEach(x=>x.classList.toggle("on",x.dataset.mode===state.mode)); }
+
+function compute(){
+  const s=state, d=(s.denialRate||0)/100;
+  const doClinic=s.mode==="clinic"||s.mode==="both";
+  const doHome=s.mode==="home"||s.mode==="both";
+
+  const clinicNhiPer=(s.acuPoints + (s.clinicOther||0))*s.acuValue; // (一般針灸點數＋診察費點數)×門診點值
+  const clinicNhiTotal=doClinic?s.clinicPatients*clinicNhiPer:0;
+  const clinicNhiNet=clinicNhiTotal*(1-d);
+  const subsidy=doClinic?s.travelSubsidy:0;
+
+  const homeNhiPer=s.homeVisitPoints*s.homeVisitValue + s.homeAcuPoints*s.homeAcuValue;
+  const homeNhiTotal=doHome?s.homePatients*homeNhiPer:0;
+  const homeNhiNet=homeNhiTotal*(1-d);
+
+  const revenue=subsidy+clinicNhiNet+homeNhiNet;
+
+  const docClinic=doClinic?s.docClinicPay:0;
+  const docHome=doHome?Math.max(s.docHomePer*s.homePatients,s.docHomeFloor):0;
+  const nurseClinic=doClinic?s.nurseClinicPay:0;
+  const nurseHome=doHome?s.nurseHomePer*s.homePatients:0;
+  const venue=doClinic?s.venueFee:0;
+  const license=(s.workDaysMonth>0)?(s.licenseMonthly/s.workDaysMonth):0; // 每趟攤提，出勤即計
+  const vehicle=s.distanceKm*s.vehCost;
+  const driver=s.includeDriver?s.driverHourly*s.workHours:0;
+  const cost=docClinic+docHome+nurseClinic+nurseHome+venue+license+vehicle+driver;
+
+  // marginal contribution per extra patient
+  const mHome=doHome?(homeNhiPer*(1-d)-s.nurseHomePer-s.docHomePer):null;
+  const mClinic=doClinic?(clinicNhiPer*(1-d)):null;
+
+  return {doClinic,doHome,subsidy,clinicNhiNet,clinicNhiTotal,homeNhiNet,homeNhiTotal,
+    clinicNhiPer,homeNhiPer,revenue,docClinic,docHome,nurseClinic,nurseHome,venue,license,vehicle,driver,cost,
+    net:revenue-cost,mHome,mClinic,d};
+}
+
+function line(k,v,cls,sub,dotColor){
+  const dot=dotColor?`<span class="dot" style="background:${dotColor}"></span>`:"";
+  return `<div class="line ${sub?'sub':''}"><span class="k">${dot}${k}</span><span class="v ${cls||''}">${v}</span></div>`;
+}
+
+function render(){
+  const r=compute();
+
+  // toggle rows by mode
+  document.querySelectorAll('[data-grp="clinic"]').forEach(el=>el.style.display=r.doClinic?"":"none");
+  document.querySelectorAll('[data-grp="home"]').forEach(el=>el.style.display=r.doHome?"":"none");
+
+  const net=$("netVal");
+  net.textContent=money(r.net);
+  net.className="net "+(r.net>=0?"pos":"neg");
+  $("netSub").textContent=(r.net>=0?"本趟獲利 ":"本趟虧損 ")+"　利潤率 "+(r.revenue>0?Math.round(r.net/r.revenue*100):0)+"%";
+
+  const tot=r.revenue+r.cost||1;
+  $("barRev").style.width=(r.revenue/tot*100)+"%";
+  $("barCost").style.width=(r.cost/tot*100)+"%";
+  $("rcRev").textContent="收入 "+money(r.revenue);
+  $("rcCost").textContent="支出 "+money(r.cost);
+
+  $("mHome").textContent=r.mHome==null?"—":money(r.mHome);
+  $("mClinic").textContent=r.mClinic==null?"—":money(r.mClinic);
+
+  // tags
+  $("tagRev").textContent=money(r.revenue);
+  $("tagStaff").textContent=money(r.docClinic+r.docHome+r.nurseClinic+r.nurseHome);
+  $("tagOther").textContent=money(r.venue+r.license);
+  $("tagTrans").textContent=money(r.vehicle+r.driver);
+
+  // revenue lines
+  let rev="";
+  if(r.doClinic){
+    rev+=line("車馬費補助（三級偏鄉）",money(r.subsidy),"gold",false,"var(--gold)");
+    rev+=line(`門診健保收入 ${nf.format(state.clinicPatients)} 人<small>診察＋一般針灸</small>`,money(r.clinicNhiNet),"pos",false,"var(--pos)");
+    if(r.d>0) rev+=line(`已扣核刪 ${state.denialRate}%（門診）`,"−"+money(r.clinicNhiTotal-r.clinicNhiNet),"",true);
+  }
+  if(r.doHome){
+    rev+=line(`居家健保收入 ${nf.format(state.homePatients)} 人<small>訪視＋複雜針灸</small>`,money(r.homeNhiNet),"pos",false,"var(--pos)");
+    if(r.d>0) rev+=line(`已扣核刪 ${state.denialRate}%（居家）`,"−"+money(r.homeNhiTotal-r.homeNhiNet),"",true);
+  }
+  $("revLines").innerHTML=rev;
+  $("revTotal").textContent=money(r.revenue);
+
+  // cost lines
+  let c="";
+  if(r.doClinic) c+=line("醫師門診薪資",money(r.docClinic),"neg",false,"var(--neg)");
+  if(r.doHome) c+=line("醫師居家薪資",money(r.docHome),"neg",false,"var(--neg)");
+  if(r.doClinic) c+=line("護理師門診",money(r.nurseClinic),"neg",false,"var(--neg)");
+  if(r.doHome) c+=line("護理師居家",money(r.nurseHome),"neg",false,"var(--neg)");
+  if(r.doClinic) c+=line("門診場地費",money(r.venue),"neg",false,"var(--neg)");
+  c+=line(`醫師牌照費加給（${nf.format(state.licenseMonthly)}÷${state.workDaysMonth}）`,money(r.license),"neg",false,"var(--neg)");
+  c+=line(`車輛（${nf.format(state.distanceKm)}km × ${state.vehCost}）`,money(r.vehicle),"neg",false,"var(--neg)");
+  if(state.includeDriver) c+=line(`司機（${state.workHours}hr × ${state.driverHourly}）`,money(r.driver),"neg",false,"var(--neg)");
+  $("costLines").innerHTML=c;
+  $("costTotal").textContent=money(r.cost);
+}
+
+$("resetBtn").addEventListener("click",()=>{
+  if(!confirm("回復所有欄位為預設值？")) return;
+  state=Object.assign({},DEFAULTS);
+  save();
+  fields.forEach(f=>{const el=$(f); if(el) el.value=state[f];});
+  $("includeDriver").checked=state.includeDriver;
+  setModeUI(); render();
+});
+
+// theme toggle
+const themeBtn=$("themeBtn");
+function applyTheme(t){ if(t) document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme"); }
+let theme=localStorage.getItem("rmc_theme")||"";
+applyTheme(theme);
+themeBtn.addEventListener("click",()=>{
+  theme = theme==="dark"?"light" : theme==="light"?"" : "dark";
+  localStorage.setItem("rmc_theme",theme);
+  applyTheme(theme);
+});
+
+bindFields(); setModeUI(); render();
+</script>
