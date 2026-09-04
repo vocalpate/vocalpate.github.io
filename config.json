@@ -19,8 +19,14 @@
       "category": "居家醫療",
       "status": "live",
       "tags": [
-        { "text": "GitHub Pages", "color": "blue" },
-        { "text": "Google Sheets", "color": "green" }
+        {
+          "text": "GitHub Pages",
+          "color": "blue"
+        },
+        {
+          "text": "Google Sheets",
+          "color": "green"
+        }
       ]
     },
     {
@@ -32,8 +38,14 @@
       "category": "居家醫療",
       "status": "live",
       "tags": [
-        { "text": "Google Maps", "color": "blue" },
-        { "text": "路線最佳化", "color": "purple" }
+        {
+          "text": "Google Maps",
+          "color": "blue"
+        },
+        {
+          "text": "路線最佳化",
+          "color": "purple"
+        }
       ]
     },
     {
@@ -45,8 +57,14 @@
       "category": "居家醫療",
       "status": "live",
       "tags": [
-        { "text": "Apps Script", "color": "purple" },
-        { "text": "資料同步", "color": "green" }
+        {
+          "text": "Apps Script",
+          "color": "purple"
+        },
+        {
+          "text": "資料同步",
+          "color": "green"
+        }
       ]
     },
     {
@@ -58,9 +76,18 @@
       "category": "診所開業",
       "status": "live",
       "tags": [
-        { "text": "LINE Bot", "color": "green" },
-        { "text": "Google Sheets", "color": "green" },
-        { "text": "疼痛追蹤", "color": "coral" }
+        {
+          "text": "LINE Bot",
+          "color": "green"
+        },
+        {
+          "text": "Google Sheets",
+          "color": "green"
+        },
+        {
+          "text": "疼痛追蹤",
+          "color": "coral"
+        }
       ]
     },
     {
@@ -72,8 +99,14 @@
       "category": "診所開業",
       "status": "plan",
       "tags": [
-        { "text": "服務線", "color": "coral" },
-        { "text": "規劃中", "color": "gray" }
+        {
+          "text": "服務線",
+          "color": "coral"
+        },
+        {
+          "text": "規劃中",
+          "color": "gray"
+        }
       ]
     },
     {
@@ -85,8 +118,14 @@
       "category": "診所開業",
       "status": "plan",
       "tags": [
-        { "text": "服務線", "color": "coral" },
-        { "text": "規劃中", "color": "gray" }
+        {
+          "text": "服務線",
+          "color": "coral"
+        },
+        {
+          "text": "規劃中",
+          "color": "gray"
+        }
       ]
     },
     {
@@ -98,8 +137,14 @@
       "category": "診所開業",
       "status": "plan",
       "tags": [
-        { "text": "服務線", "color": "coral" },
-        { "text": "AI 自動化", "color": "purple" }
+        {
+          "text": "服務線",
+          "color": "coral"
+        },
+        {
+          "text": "AI 自動化",
+          "color": "purple"
+        }
       ]
     },
     {
@@ -111,8 +156,14 @@
       "category": "診所開業",
       "status": "dev",
       "tags": [
-        { "text": "Canva", "color": "amber" },
-        { "text": "衛教", "color": "green" }
+        {
+          "text": "Canva",
+          "color": "amber"
+        },
+        {
+          "text": "衛教",
+          "color": "green"
+        }
       ]
     },
     {
@@ -124,9 +175,18 @@
       "category": "AI 工具",
       "status": "live",
       "tags": [
-        { "text": "Gemini", "color": "blue" },
-        { "text": "LINE Bot", "color": "green" },
-        { "text": "Python", "color": "amber" }
+        {
+          "text": "Gemini",
+          "color": "blue"
+        },
+        {
+          "text": "LINE Bot",
+          "color": "green"
+        },
+        {
+          "text": "Python",
+          "color": "amber"
+        }
       ]
     },
     {
@@ -138,8 +198,14 @@
       "category": "AI 工具",
       "status": "dev",
       "tags": [
-        { "text": "Claude API", "color": "purple" },
-        { "text": "LINE", "color": "green" }
+        {
+          "text": "Claude API",
+          "color": "purple"
+        },
+        {
+          "text": "LINE",
+          "color": "green"
+        }
       ]
     },
     {
@@ -151,8 +217,14 @@
       "category": "基礎建設",
       "status": "dev",
       "tags": [
-        { "text": "Google Drive", "color": "amber" },
-        { "text": "Apps Script", "color": "purple" }
+        {
+          "text": "Google Drive",
+          "color": "amber"
+        },
+        {
+          "text": "Apps Script",
+          "color": "purple"
+        }
       ]
     },
     {
@@ -164,8 +236,14 @@
       "category": "基礎建設",
       "status": "plan",
       "tags": [
-        { "text": "Hetzner", "color": "gray" },
-        { "text": "部署", "color": "blue" }
+        {
+          "text": "Hetzner",
+          "color": "gray"
+        },
+        {
+          "text": "部署",
+          "color": "blue"
+        }
       ]
     },
     {
@@ -177,7 +255,10 @@
       "category": "基礎建設",
       "status": "live",
       "tags": [
-        { "text": "GitHub", "color": "gray" }
+        {
+          "text": "GitHub",
+          "color": "gray"
+        }
       ]
     },
     {
@@ -189,8 +270,14 @@
       "category": "居家醫療",
       "status": "live",
       "tags": [
-        { "text": "Apps Script", "color": "purple" },
-        { "text": "Google Sheets", "color": "green" }
+        {
+          "text": "Apps Script",
+          "color": "purple"
+        },
+        {
+          "text": "Google Sheets",
+          "color": "green"
+        }
       ]
     },
     {
@@ -202,8 +289,14 @@
       "category": "居家醫療",
       "status": "dev",
       "tags": [
-        { "text": "Apps Script", "color": "purple" },
-        { "text": "Canvas 簽名", "color": "blue" }
+        {
+          "text": "Apps Script",
+          "color": "purple"
+        },
+        {
+          "text": "Canvas 簽名",
+          "color": "blue"
+        }
       ]
     },
     {
@@ -215,9 +308,18 @@
       "category": "診所開業",
       "status": "dev",
       "tags": [
-        { "text": "純 HTML", "color": "amber" },
-        { "text": "後台管理", "color": "blue" },
-        { "text": "手機優先", "color": "green" }
+        {
+          "text": "純 HTML",
+          "color": "amber"
+        },
+        {
+          "text": "後台管理",
+          "color": "blue"
+        },
+        {
+          "text": "手機優先",
+          "color": "green"
+        }
       ]
     },
     {
@@ -229,9 +331,18 @@
       "category": "AI 工具",
       "status": "live",
       "tags": [
-        { "text": "Python", "color": "amber" },
-        { "text": "EasyOCR", "color": "blue" },
-        { "text": "本機工具", "color": "gray" }
+        {
+          "text": "Python",
+          "color": "amber"
+        },
+        {
+          "text": "EasyOCR",
+          "color": "blue"
+        },
+        {
+          "text": "本機工具",
+          "color": "gray"
+        }
       ]
     },
     {
@@ -243,9 +354,18 @@
       "category": "診所開業",
       "status": "dev",
       "tags": [
-        { "text": "純 HTML", "color": "amber" },
-        { "text": "規則庫", "color": "purple" },
-        { "text": "手機優先", "color": "green" }
+        {
+          "text": "純 HTML",
+          "color": "amber"
+        },
+        {
+          "text": "規則庫",
+          "color": "purple"
+        },
+        {
+          "text": "手機優先",
+          "color": "green"
+        }
       ]
     },
     {
@@ -257,9 +377,18 @@
       "category": "診所開業",
       "status": "live",
       "tags": [
-        { "text": "私人", "color": "gray" },
-        { "text": "Apps Script", "color": "purple" },
-        { "text": "手機優先", "color": "green" }
+        {
+          "text": "私人",
+          "color": "gray"
+        },
+        {
+          "text": "Apps Script",
+          "color": "purple"
+        },
+        {
+          "text": "手機優先",
+          "color": "green"
+        }
       ]
     },
     {
@@ -271,9 +400,87 @@
       "category": "診所開業",
       "status": "dev",
       "tags": [
-        { "text": "純 HTML", "color": "amber" },
-        { "text": "勞基法試算", "color": "purple" },
-        { "text": "手機優先", "color": "green" }
+        {
+          "text": "純 HTML",
+          "color": "amber"
+        },
+        {
+          "text": "勞基法試算",
+          "color": "purple"
+        },
+        {
+          "text": "手機優先",
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "name": "偏鄉醫療盈虧試算",
+      "desc": "中醫偏鄉門診＋居家醫療單趟成本效益試算，點值/薪資/車馬/場地/牌照/核刪率全可調，即時算淨盈虧與每人邊際貢獻。",
+      "url": "https://vocalpate.github.io/farhomecare/",
+      "icon": "⛰️",
+      "iconBg": "#EFF6F2",
+      "category": "居家醫療",
+      "status": "live",
+      "tags": [
+        {
+          "text": "純 HTML",
+          "color": "amber"
+        },
+        {
+          "text": "成本試算",
+          "color": "purple"
+        },
+        {
+          "text": "手機優先",
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "name": "診所名片位置圖編輯器",
+      "desc": "自製名片用診所位置圖：拖曳道路/地標、路名橫/直書、四種風格（手繪·地圖·簡約·捷運）、地標可放圖片，乾淨模式截圖給印刷。",
+      "url": "https://claude.ai/code/artifact/da975ea1-4d18-4f7f-bf4d-6cceb5351bfc",
+      "icon": "🗺️",
+      "iconBg": "#EFF6F2",
+      "category": "診所開業",
+      "status": "live",
+      "tags": [
+        {
+          "text": "純 HTML",
+          "color": "amber"
+        },
+        {
+          "text": "名片工具",
+          "color": "purple"
+        },
+        {
+          "text": "手機優先",
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "name": "診所名片產生器",
+      "desc": "填內容→拉區塊自動組正反面名片：內建地圖編輯器、門診時間表、可換色向量圖示、Logo去背、自動對齊，並可輸出正反面印刷 PDF。",
+      "url": "https://claude.ai/code/artifact/10ddb3a6-8f07-4641-a15c-279e44fd68db",
+      "icon": "🎴",
+      "iconBg": "#EFF6F2",
+      "category": "診所開業",
+      "status": "dev",
+      "tags": [
+        {
+          "text": "純 HTML",
+          "color": "amber"
+        },
+        {
+          "text": "名片工具",
+          "color": "purple"
+        },
+        {
+          "text": "手機優先",
+          "color": "green"
+        }
       ]
     }
   ]
