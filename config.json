@@ -467,7 +467,7 @@
       "icon": "🎴",
       "iconBg": "#EFF6F2",
       "category": "診所開業",
-      "status": "dev",
+      "status": "live",
       "tags": [
         {
           "text": "純 HTML",
