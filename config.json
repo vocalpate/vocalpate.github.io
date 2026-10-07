@@ -440,7 +440,7 @@
     {
       "name": "診所名片位置圖編輯器",
       "desc": "自製名片用診所位置圖：拖曳道路/地標、路名橫/直書、四種風格（手繪·地圖·簡約·捷運）、地標可放圖片，乾淨模式截圖給印刷。",
-      "url": "https://claude.ai/code/artifact/da975ea1-4d18-4f7f-bf4d-6cceb5351bfc",
+      "url": "file:///G:/我的雲端硬碟/AI/15_診所名片位置圖編輯器/位置圖編輯器.html",
       "icon": "🗺️",
       "iconBg": "#EFF6F2",
       "category": "診所開業",
@@ -463,7 +463,7 @@
     {
       "name": "診所名片產生器",
       "desc": "填內容→拉區塊自動組正反面名片：內建地圖編輯器、門診時間表、可換色向量圖示、Logo去背、自動對齊，並可輸出正反面印刷 PDF。",
-      "url": "https://claude.ai/code/artifact/10ddb3a6-8f07-4641-a15c-279e44fd68db",
+      "url": "file:///G:/我的雲端硬碟/AI/16_診所名片產生器/名片產生器.html",
       "icon": "🎴",
       "iconBg": "#EFF6F2",
       "category": "診所開業",
